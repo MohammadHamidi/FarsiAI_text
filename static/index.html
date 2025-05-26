@@ -6,7 +6,7 @@
   <title>DocRight</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="/styles.css" /> <!-- Assuming styles.css is at the root of public/static -->
+  <link rel="stylesheet" href="./static/styles.css" /> <!-- Assuming styles.css is at the root of public/static -->
 </head>
 <body class="bg-gray-50 font-sans text-gray-900 flex flex-col min-h-screen">
 
@@ -20,7 +20,7 @@
         </svg>
         <span class="ml-2 rtl:mr-2 rtl:ml-0">در حال پردازش...</span>
       </div>
-      <!-- <button id="btn-preview" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">پیش‌نمایش</button> -->
+      <button id="btn-preview" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">پیش‌نمایش</button>
       <button id="btn-docx" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">DOCX</button>
     </div>
   </nav>
@@ -54,7 +54,7 @@
     </aside>
   </main>
 
-  <footer class="mt-auto text-center text-gray-500 text-sm py-8 px-4">
+  <footer class="mt-auto text-center text-gray-500 text-sm py-8 px-8">
     <div class="mb-4">
         DocRight © ۲۰۲۵
     </div>
@@ -62,13 +62,13 @@
       <a href="https://n98n.ir" 
          target="_blank" 
          rel="noopener noreferrer"
-         class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-        <!-- <img src="./icon.png" alt="n98n Logo" class="h-5 w-5 mr-2 rtl:ml-2 rtl:mr-0">  -->
+         class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-bold rounded-md shadow-sm text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+        <img src="./static/assets/icon.svg" alt="n98n Logo" class="h-12 w-30 mr-2 rtl:ml-2 rtl:mr-2"> 
         وب‌سایت n98n
       </a>
     </div>
   </footer>
 
-  <script src="/app.js"></script> <!-- Assuming app.js is at the root of public/static -->
+  <script src="./static/app.js"></script> <!-- Assuming app.js is at the root of public/static -->
 </body>
 </html>
