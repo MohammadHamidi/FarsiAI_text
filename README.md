@@ -1,4 +1,4 @@
-# Farsi AI Text Fixer
+# DocRight
 
 ## Run locally with Docker
 

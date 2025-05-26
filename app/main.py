@@ -18,7 +18,7 @@ from .config import settings, OUT_DIR # settings.ALLOWED_FORMATS will be {"docx"
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Farsi AI Text Fixer API",
+    title="DocRight API",
     description="Convert Markdown text to DOCX with RTL support", # MODIFIED description
     version="1.0.0",
     docs_url="/api/docs" if settings.DEBUG else None,
@@ -172,11 +172,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info(f"Starting Farsi AI Text Fixer with output dir: {OUT_DIR}")
+    logger.info(f"Starting DocRight with output dir: {OUT_DIR}")
     # Output directory creation is now handled by Pydantic settings validator
     # os.makedirs(OUT_DIR, exist_ok=True) # Still good to have, or rely on validator
     cleanup_old_files()
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Shutting down Farsi AI Text Fixer")
+    logger.info("Shutting down DocRight")
