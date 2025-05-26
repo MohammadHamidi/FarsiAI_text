@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./data/outputs:/tmp/outputs
+    environment:
+      - DEBUG=true
+      - MAX_FILE_AGE_HOURS=24
+      - RATE_LIMIT=60
+    restart: unless-stopped

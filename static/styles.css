@@ -1,0 +1,122 @@
+/* Right-to-left prose styling */
+.prose-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* History card styling */
+#history li {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#history li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Buttons in each history card */
+.history-btn {
+  display: block;
+  width: 5rem;
+  padding: 0.5rem 0;
+  text-align: center;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.history-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Customizing the PDF button */
+.history-btn[href$=".pdf"] {
+  background-color: #ef4444;
+}
+
+.history-btn[href$=".pdf"]:hover {
+  background-color: #dc2626;
+}
+
+/* Customizing the DOCX button */
+.history-btn[href$=".docx"] {
+  background-color: #8b5cf6;
+}
+
+.history-btn[href$=".docx"]:hover {
+  background-color: #7c3aed;
+}
+
+/* Default scrollbar styling for overflowable areas */
+#preview::-webkit-scrollbar,
+#history::-webkit-scrollbar,
+textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#preview::-webkit-scrollbar-thumb,
+#history::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+#preview::-webkit-scrollbar-thumb:hover,
+#history::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.3);
+}
+
+#preview::-webkit-scrollbar-track,
+#history::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track {
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #history li {
+    flex-direction: column;
+  }
+  
+  .history-btn {
+    width: 100%;
+  }
+}
+
+/* Animation for spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Improved focus states for accessibility */
+button:focus, 
+textarea:focus, 
+a:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  border: 2px dashed #e5e7eb;
+  border-radius: 0.5rem;
+}

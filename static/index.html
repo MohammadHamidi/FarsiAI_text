@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farsi AI Text Fixer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+
+  <nav class="bg-white shadow p-4 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Farsi AI Text Fixer</h1>
+    <div class="space-x-2 rtl:space-x-reverse flex items-center">
+      <div id="spinner" class="hidden items-center mr-4 rtl:ml-4 rtl:mr-0">
+        <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-2 rtl:mr-2 rtl:ml-0">در حال پردازش...</span>
+      </div>
+      <button id="btn-preview" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">پیش‌نمایش</button>
+      <button id="btn-docx" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">DOCX</button>
+      <!-- PDF Button Removed -->
+      <!-- <button id="btn-pdf" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">PDF</button> -->
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <section class="md:col-span-2 space-y-8">
+      <div>
+        <h2 class="text-xl font-semibold mb-2">ورودی</h2>
+        <textarea id="input"
+          class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-indigo-300 focus:border-indigo-300 focus:outline-none"
+          placeholder="متن خود را اینجا وارد کنید…"></textarea>
+        <div class="text-sm text-gray-500 mt-1">از Markdown برای قالب‌بندی استفاده کنید</div>
+      </div>
+      <div>
+        <h2 class="text-xl font-semibold mb-2">پیش‌نمایش</h2>
+        <div id="preview"
+          class="prose prose-rtl bg-white p-6 rounded-lg shadow-sm min-h-[200px] max-h-[400px] overflow-auto">
+          <div class="text-gray-400 italic">پیش‌نمایش در اینجا نمایش داده می‌شود...</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="md:col-span-1 flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">تاریخچه</h2>
+        <button id="btn-clear" class="text-red-600 text-sm hover:underline">پاک کردن همه</button>
+      </div>
+      <ul id="history" class="space-y-4 overflow-auto max-h-[500px] flex-1">
+        <!-- JS will inject <li> cards here -->
+      </ul>
+    </aside>
+  </main>
+
+  <footer class="mt-8 text-center text-gray-500 text-sm pb-4">
+    Farsi AI Text Fixer © 2025
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
