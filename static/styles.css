@@ -2,21 +2,36 @@
 
 /* Basic Reset/Defaults */
 html {
-  box-sizing: border-box; /* Apply box-sizing to html to be inherited */
-  height: 100%; /* Helps ensure body can also be 100% if needed */
+  box-sizing: border-box;
+  /* Apply box-sizing to html to be inherited */
+  height: 100%;
+  /* Helps ensure body can also be 100% if needed */
 }
 
-*, *::before, *::after {
-  box-sizing: inherit; /* All elements inherit box-sizing from html */
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  /* All elements inherit box-sizing from html */
+}
+
+.my-icon {
+  width: 48px;
+  height: 48px;
+  background: url('icon.svg') no-repeat center/contain;
 }
 
 body {
-  height: 100%; /* Complements min-h-screen for full height flex layout */
-  margin: 0; /* Remove default browser margin */
-  padding: 0; /* Remove default browser padding */
+  height: 100%;
+  /* Complements min-h-screen for full height flex layout */
+  margin: 0;
+  /* Remove default browser margin */
+  padding: 0;
+  /* Remove default browser padding */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6; /* Default line height for readability */
+  line-height: 1.6;
+  /* Default line height for readability */
   /* Tailwind classes on body handle bg, font-family, text color, and flex layout */
 }
 
@@ -41,12 +56,15 @@ body {
 .prose-rtl blockquote,
 .prose-rtl figure,
 .prose-rtl pre {
-  text-align: right; /* Default for most elements */
+  text-align: right;
+  /* Default for most elements */
 }
 
 /* Specific adjustments for lists if needed */
-.prose-rtl ul, .prose-rtl ol {
-  padding-right: 1.5em; /* Indent lists from the right */
+.prose-rtl ul,
+.prose-rtl ol {
+  padding-right: 1.5em;
+  /* Indent lists from the right */
   padding-left: 0;
 }
 
@@ -59,32 +77,42 @@ body {
   background-color: #ffffff;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); /* Tailwind's shadow-sm or shadow-md */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  /* Tailwind's shadow-sm or shadow-md */
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 #history li:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* Tailwind's shadow-lg */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Tailwind's shadow-lg */
 }
 
 /* Buttons in each history card (DOCX link, Delete button via JS) */
 /* These are styled primarily by Tailwind classes in app.js, this CSS is a fallback or for overrides */
-.history-btn, .history-delete-btn {
+.history-btn,
+.history-delete-btn {
   display: block;
-  width: 100%; /* Ensure they take full width of their container in the history item */
-  padding: 0.375rem 0.5rem; /* py-1.5 px-2 */
+  width: 100%;
+  /* Ensure they take full width of their container in the history item */
+  padding: 0.375rem 0.5rem;
+  /* py-1.5 px-2 */
   text-align: center;
-  font-weight: 500; /* font-medium */
-  border-radius: 0.375rem; /* rounded-md */
-  font-size: 0.75rem; /* text-xs */
-  line-height: 1rem; /* leading-4 */
+  font-weight: 500;
+  /* font-medium */
+  border-radius: 0.375rem;
+  /* rounded-md */
+  font-size: 0.75rem;
+  /* text-xs */
+  line-height: 1rem;
+  /* leading-4 */
   color: white;
   transition: background-color 0.2s ease, transform 0.1s ease;
   cursor: pointer;
 }
 
-.history-btn:hover, .history-delete-btn:hover {
+.history-btn:hover,
+.history-delete-btn:hover {
   transform: scale(1.03);
 }
 
@@ -112,25 +140,32 @@ textarea::-webkit-scrollbar-thumb {
 #preview::-webkit-scrollbar-thumb:hover,
 #history::-webkit-scrollbar-thumb:hover,
 textarea::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0,0,0,0.35);
+  background-color: rgba(0, 0, 0, 0.35);
 }
 
 #preview::-webkit-scrollbar-track,
 #history::-webkit-scrollbar-track,
 textarea::-webkit-scrollbar-track {
-  background-color: rgba(0,0,0,0.08);
+  background-color: rgba(0, 0, 0, 0.08);
   border-radius: 4px;
 }
 
 /* Responsive adjustments for history list items */
-@media (max-width: 768px) { /* md breakpoint */
+@media (max-width: 768px) {
+
+  /* md breakpoint */
   #history li {
     flex-direction: column;
-    align-items: stretch; /* Make info and button container take full width */
+    align-items: stretch;
+    /* Make info and button container take full width */
   }
-  #history li > div:first-child { /* The info div */
-    margin-bottom: 0.5rem; /* Space between info and button container */
+
+  #history li>div:first-child {
+    /* The info div */
+    margin-bottom: 0.5rem;
+    /* Space between info and button container */
   }
+
   /* Buttons are already width: 100% via .history-btn */
 }
 
@@ -140,7 +175,8 @@ textarea::-webkit-scrollbar-track {
 button:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #4f46e5; /* indigo-600 */
+  outline: 2px solid #4f46e5;
+  /* indigo-600 */
   outline-offset: 2px;
   /* box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4); Optional focus ring shadow */
 }
@@ -149,8 +185,12 @@ a:focus-visible {
 .empty-history-message {
   text-align: center;
   padding: 2rem 1rem;
-  color: #3a00c0; /* gray-500 */
-  border: 2px dashed #d1d5db; /* gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  margin-top: 1rem; /* Or use Tailwind margin classes in JS */
+  color: #3a00c0;
+  /* gray-500 */
+  border: 2px dashed #d1d5db;
+  /* gray-300 */
+  border-radius: 0.5rem;
+  /* rounded-lg */
+  margin-top: 1rem;
+  /* Or use Tailwind margin classes in JS */
 }
