@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     """Application settings with validation using Pydantic"""
 
     # Directory for output files
-    OUT_DIR: str = os.getenv("OUT_DIR", "/tmp/outputs")
+    BASE_DIR = Path(__file__).parent.parent  # points to /app
+    OUT_DIR = os.getenv("OUT_DIR", str(BASE_DIR / "outputs"))
 
     # Allowed output formats - ONLY DOCX NOW
     ALLOWED_FORMATS: Set[str] = {"docx"} # MODIFIED
