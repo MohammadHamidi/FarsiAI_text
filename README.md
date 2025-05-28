@@ -7,4 +7,4 @@ cd farsi-ai-text-fixer
 docker-compose up --build
 ```
 
-Then visit http://localhost:8000
+Then visit http://autosaz.ir:8000

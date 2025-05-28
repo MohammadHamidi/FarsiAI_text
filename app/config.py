@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from pydantic import BaseSettings, validator # Keep Pydantic if used for other settings
 import logging
 from typing import Set
@@ -44,7 +45,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Export settings as module variables for backward compatibility (if needed elsewhere)
-OUT_DIR = settings.OUT_DIR
+BASE = Path(__file__).parent.parent  # that’s /app
+OUT_DIR = os.getenv("OUT_DIR", str(BASE / "outputs"))
 ALLOWED = settings.ALLOWED_FORMATS # This will now be {"docx"}
 MAX_FILE_AGE_HOURS = settings.MAX_FILE_AGE_HOURS
 RATE_LIMIT = settings.RATE_LIMIT
