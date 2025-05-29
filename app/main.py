@@ -13,6 +13,7 @@ from typing import Dict, Any, Callable # Keep Callable if used
 
 from .converter import render_markdown, cleanup_old_files
 from .config import settings, OUT_DIR # settings.ALLOWED_FORMATS will be {"docx"}
+from .firebase_utils import initialize_firebase, track_event # Add Firebase imports
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -103,6 +104,7 @@ async def admin_cleanup(request: Request):
 @app.post("/api/convert", dependencies=[Depends(check_rate_limit)])
 async def convert(
     background_tasks: BackgroundTasks,
+    request: Request,
     text: str = Form(...),
     format: str = Form(...) # format will now always be "docx" based on frontend
 ):
@@ -112,6 +114,17 @@ async def convert(
 
     if len(text.encode('utf-8')) > settings.MAX_INPUT_SIZE:
         raise HTTPException(413, "Input text too large")
+
+    # Track conversion event
+    if settings.FIREBASE_ANALYTICS_ENABLED:
+        user_ip = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+        await track_event(
+            "conversion_requested", 
+            {"format": format, "text_length": len(text)},
+            user_ip=user_ip,
+            user_agent=user_agent
+        )
 
     uid = uuid.uuid4().hex
     md_file = os.path.join(OUT_DIR, f"{uid}.md")
@@ -175,8 +188,12 @@ async def startup_event():
     logger.info(f"Starting DocRight with output dir: {OUT_DIR}")
     # Output directory creation is now handled by Pydantic settings validator
     # os.makedirs(OUT_DIR, exist_ok=True) # Still good to have, or rely on validator
+    initialize_firebase() # Initialize Firebase
     cleanup_old_files()
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Shutting down DocRight")
+    # Gracefully close the httpx client
+    from .firebase_utils import client as httpx_client # Get the client instance
+    await httpx_client.aclose()

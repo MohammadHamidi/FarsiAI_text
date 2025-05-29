@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     # Enable debug mode
     DEBUG: bool = os.getenv("DEBUG", "").lower() in ("true", "1", "yes")
 
+    # Firebase Analytics
+    FIREBASE_SERVICE_ACCOUNT_KEY_PATH: str | None = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY_PATH")
+    FIREBASE_ANALYTICS_ENABLED: bool = os.getenv("FIREBASE_ANALYTICS_ENABLED", "false").lower() in ("true", "1", "yes")
+
+    # Google Analytics 4 Measurement Protocol
+    GA_MEASUREMENT_ID: str | None = os.getenv("GA_MEASUREMENT_ID")
+    GA_API_SECRET: str | None = os.getenv("GA_API_SECRET")
+
     @validator("OUT_DIR")
     def create_out_dir(cls, v):
         """Ensure output directory exists"""
@@ -46,13 +54,21 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Export settings as module variables for backward compatibility (if needed elsewhere)
-BASE = Path(__file__).parent.parent  # that’s /app
+BASE = Path(__file__).parent.parent  # that's /app
 OUT_DIR = os.getenv("OUT_DIR", str(BASE / "outputs"))
 ALLOWED = settings.ALLOWED_FORMATS # This will now be {"docx"}
 MAX_FILE_AGE_HOURS = settings.MAX_FILE_AGE_HOURS
 RATE_LIMIT = settings.RATE_LIMIT
 MAX_INPUT_SIZE = settings.MAX_INPUT_SIZE
 DEBUG = settings.DEBUG
+
+# Firebase Settings
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH = settings.FIREBASE_SERVICE_ACCOUNT_KEY_PATH
+FIREBASE_ANALYTICS_ENABLED = settings.FIREBASE_ANALYTICS_ENABLED
+
+# Google Analytics Settings
+GA_MEASUREMENT_ID = settings.GA_MEASUREMENT_ID
+GA_API_SECRET = settings.GA_API_SECRET
 
 # Set log level based on debug setting
 if DEBUG:

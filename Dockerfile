@@ -64,11 +64,17 @@ RUN useradd -m -s /bin/bash -u 1000 appuser && \
 # Copy application code and front-end assets as non-root
 COPY --chown=appuser:appuser app/    ./app
 COPY --chown=appuser:appuser static/ ./static
+# Copy Firebase service account key from app directory in build context to /app in container
+COPY --chown=appuser:appuser app/serviceAccountKey.json /app/serviceAccountKey.json
 
 # Environment vars
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    OUT_DIR=/app/outputs
+    OUT_DIR=/app/outputs \
+    FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/app/serviceAccountKey.json \
+    FIREBASE_ANALYTICS_ENABLED=true \
+    GA_MEASUREMENT_ID=G-X9B77HX3KT \
+    GA_API_SECRET=IjyeGKEFTJun8jHtcM_Jwg
 
 # Switch to non-root user
 USER appuser
