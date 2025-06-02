@@ -5,22 +5,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DocRight</title>
-  <!-- Tailwind for rapid prototyping; replace with a production build later -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Markdown parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- Your custom styles -->
   <link rel="stylesheet" href="./static/styles.css" />
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X9B77HCX3KT"></script>
+  <script>
+    // Initialize gtag.js
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    // Configure Google Analytics with your Measurement ID
+    // IMPORTANT: Replace 'G-XXXXXXXXXX' with your actual Google Analytics 4 Measurement ID
+    gtag('config', 'G-X9B77HCX3KT');
+
+    // Optional: Send a custom event on page load (example)
+    // This demonstrates how to send an event once the page is fully loaded
+    window.addEventListener('load', () => {
+      console.log('Page loaded, sending custom event: page_loaded_event');
+      gtag('event', 'page_loaded_event', {
+        'event_category': 'Engagement',
+        'event_label': 'Initial Page Load',
+        'value': 1
+      });
+    });
+  </script>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-50">
 
-  <!-- Navbar -->
   <nav class="bg-white shadow p-4 flex items-center justify-between">
-    <!-- CSS-background logo -->
     <div class="my-icon" role="img" aria-label="لوگو"></div>
 
-    <!-- Action Buttons -->
     <div class="space-x-2">
       <button id="btn-preview" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
         پیش‌نمایش
@@ -31,13 +48,10 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
   <main class="flex-1 w-full max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
 
-    <!-- Left Column: Instructions, Input, Preview -->
     <section class="md:col-span-2 space-y-8">
 
-      <!-- How It Works -->
       <div class="bg-white p-6 rounded-lg shadow-sm">
         <h2 class="text-2xl font-bold mb-4">چطور کار می‌کند؟</h2>
         <ol class="list-decimal list-inside space-y-2 text-gray-700 leading-relaxed">
@@ -48,7 +62,6 @@
         </ol>
       </div>
 
-      <!-- Input Area -->
       <div>
         <h2 class="text-xl font-semibold mb-2">ورودی</h2>
         <textarea id="input"
@@ -65,7 +78,6 @@
         </p>
       </div>
 
-      <!-- Preview Area -->
       <div>
         <h2 class="text-xl font-semibold mb-2">پیش‌نمایش</h2>
         <div id="preview"
@@ -76,7 +88,6 @@
 
     </section>
 
-    <!-- Right Column: History -->
     <aside class="md:col-span-1 flex flex-col">
 
       <div class="flex items-center justify-between mb-4">
@@ -87,20 +98,37 @@
       </div>
 
       <ul id="history" class="space-y-4 overflow-auto max-h-[500px] flex-1">
-        <!-- JS will inject history items here -->
-      </ul>
+        </ul>
 
     </aside>
 
   </main>
 
-  <!-- Footer -->
   <footer class="bg-white text-center py-4 text-sm text-gray-500">
     © 2025 DocRight — همه حقوق محفوظ است.
   </footer>
 
-  <!-- App Logic -->
   <script src="./static/app.js"></script>
+  <script>
+    // JavaScript to handle button click and send a custom event for #btn-docx
+    document.getElementById('btn-docx').addEventListener('click', function() {
+      console.log('DOCX button clicked, sending custom event: docx_button_click');
+      // Send a custom event when the DOCX button is clicked
+      gtag('event', 'docx_button_click', {
+        'event_category': 'Interaction',
+        'event_label': 'Generate DOCX File',
+        'value': 1
+      });
+
+      // Display a temporary message to the user
+      const messageDiv = document.createElement('div');
+      messageDiv.textContent = 'Event sent for DOCX button! Check your Google Analytics Realtime report.';
+      messageDiv.className = 'mt-4 p-2 bg-green-100 text-green-800 rounded-md text-center';
+      // Append the message to the main content area or a suitable parent
+      document.querySelector('main').appendChild(messageDiv);
+      setTimeout(() => messageDiv.remove(), 3000); // Remove message after 3 seconds
+    });
+  </script>
 </body>
 
 </html>
