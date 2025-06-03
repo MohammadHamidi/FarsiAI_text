@@ -36,13 +36,24 @@
   <!-- Custom CSS for logo -->
   <style>
     .my-icon {
-      width: 40px;
-      height: 40px;
+      width: 64px;
+      height: 64px;
       background-image: url('/static/icon.svg');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      border-radius: 8px;
+      border-radius: 6px;
+      transition: transform 0.2s ease;
+    }
+    
+    .my-icon:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Navbar improvements */
+    nav {
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.95);
     }
   </style>
 
@@ -51,26 +62,53 @@
 </head>
 <body class="flex flex-col min-h-screen bg-gray-50">
   <!-- Navbar -->
-  <nav class="bg-white shadow p-4 flex items-center justify-between">
-    <!-- CSS-background logo -->
-    <div class="my-icon" role="img" aria-label="لوگو"></div>
-    
-    <div class="flex items-center space-x-3 space-x-reverse">
-      <div>
-        <h1 class="text-xl font-bold text-gray-900">DocRight</h1>
-        <p class="text-sm text-gray-500">تبدیل متن به Word</p>
+  <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Left: Logo -->
+        <div class="flex items-center">
+          <div class="my-icon" role="img" aria-label="لوگو"></div>
+        </div>
+        
+        <!-- Center: Title -->
+        <div class="flex-1 flex items-center justify-center">
+          <div class="text-center">
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">DocRight</h1>
+            <p class="text-xs text-gray-500 mt-0.5">تبدیل متن به Word</p>
+          </div>
+        </div>
+        
+        <!-- Right: Status & Info -->
+        <div class="flex items-center space-x-4 space-x-reverse">
+          <div class="hidden sm:flex items-center space-x-3 space-x-reverse text-sm">
+            <div id="char-count" class="text-gray-600 font-medium bg-gray-100 px-3 py-1 rounded-full">
+              0 کاراکتر
+            </div>
+            <div class="flex items-center space-x-2 space-x-reverse text-green-600">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="font-medium">آنلاین</span>
+            </div>
+          </div>
+          
+          <!-- Mobile: Compact view -->
+          <div class="sm:hidden flex items-center space-x-2 space-x-reverse text-sm">
+            <div id="char-count-mobile" class="text-gray-600 text-xs">0</div>
+            <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+          </div>
+        </div>
       </div>
-    </div>
-    
-    <div class="flex items-center space-x-4 space-x-reverse">
-      <div id="char-count" class="text-sm text-gray-500">0 کاراکتر</div>
-      <div class="h-6 border-l border-gray-300"></div>
-      <div class="text-sm text-green-600 font-medium">آنلاین</div>
+      
+      <!-- Mobile: Character count bar -->
+      <div class="sm:hidden pb-3">
+        <div class="text-center text-xs text-gray-500" id="char-count-mobile-full">
+          0 کاراکتر - آنلاین
+        </div>
+      </div>
     </div>
   </nav>
 
   <!-- Main Content -->
-  <main class="flex-1 max-w-4xl mx-auto px-6 py-8 w-full">
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
     <div class="grid lg:grid-cols-2 gap-8">
       <!-- Input Section -->
       <div class="space-y-6">
@@ -176,8 +214,8 @@
   </main>
 
   <!-- Features Info -->
-  <section class="bg-white border-t py-12">
-    <div class="max-w-4xl mx-auto px-6">
+  <section class="bg-white border-t border-gray-200 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h3 class="text-lg font-semibold text-gray-900 mb-6 text-center">ویژگی‌های DocRight</h3>
       <div class="grid md:grid-cols-3 gap-6 text-center">
         <div class="p-4">
@@ -212,13 +250,15 @@
   </section>
 
   <!-- Footer -->
-  <footer class="bg-white border-t text-center py-6 text-sm text-gray-500">
-    <div class="max-w-4xl mx-auto px-6">
-      <p>© 2025 DocRight — ابزار تبدیل متن به Word</p>
-      <p class="mt-1">ساخته شده با ❤️ برای کاربران فارسی‌زبان</p>
-      <p class="mt-2 text-xs text-gray-400">
-        نسخه 2.0 | فایل‌های تولیدی در فرمت HTML/DOC که توسط Microsoft Word قابل باز کردن هستند
-      </p>
+  <footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="text-center">
+        <p class="text-sm text-gray-600">© 2025 DocRight — ابزار تبدیل متن به Word</p>
+        <p class="text-xs text-gray-500 mt-1">ساخته شده با ❤️ برای کاربران فارسی‌زبان</p>
+        <p class="text-xs text-gray-400 mt-2">
+          نسخه 2.0 | فایل‌های تولیدی در فرمت HTML/DOC که توسط Microsoft Word قابل باز کردن هستند
+        </p>
+      </div>
     </div>
   </footer>
 
@@ -265,7 +305,24 @@
       updateCharCount() {
         const input = document.getElementById('input');
         const count = input.value.length;
-        document.getElementById('char-count').textContent = `${count.toLocaleString('fa-IR')} کاراکتر`;
+        const formattedCount = count.toLocaleString('fa-IR');
+        
+        // Update desktop character count
+        const charCountEl = document.getElementById('char-count');
+        if (charCountEl) {
+          charCountEl.textContent = `${formattedCount} کاراکتر`;
+        }
+        
+        // Update mobile character count
+        const charCountMobile = document.getElementById('char-count-mobile');
+        if (charCountMobile) {
+          charCountMobile.textContent = formattedCount;
+        }
+        
+        const charCountMobileFull = document.getElementById('char-count-mobile-full');
+        if (charCountMobileFull) {
+          charCountMobileFull.textContent = `${formattedCount} کاراکتر - آنلاین`;
+        }
       }
 
       initializeEventListeners() {
