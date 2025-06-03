@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocRight - تبدیل متن به Word</title>
   <meta name="description" content="تبدیل آسان متن‌های markdown به فایل‌های Word با قالب‌بندی مناسب" />
   
@@ -19,241 +18,198 @@
     gtag('config', 'G-X9B77HX3KT');
   </script>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS (CDN for demo - consider local build for production) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            'vazir': ['Vazir', 'Tahoma', 'Arial', 'sans-serif']
-          }
+    // Suppress Tailwind production warning for this demo
+    if (typeof window !== 'undefined') {
+      const originalWarn = console.warn;
+      console.warn = function(message) {
+        if (typeof message === 'string' && message.includes('cdn.tailwindcss.com should not be used in production')) {
+          return; // Suppress this specific warning
         }
-      }
+        originalWarn.apply(console, arguments);
+      };
     }
   </script>
 
-  <!-- Markdown parser -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <!-- Custom styles -->
+  <!-- Custom CSS for logo -->
   <style>
     .my-icon {
       width: 40px;
       height: 40px;
-      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23blue"/><text x="50" y="60" font-size="60" text-anchor="middle" fill="white">D</text></svg>');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
       border-radius: 8px;
-      position: relative;
-    }
-    
-    .my-icon::before {
-      content: 'DR';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .prose-rtl {
-      direction: rtl;
-      text-align: right;
-    }
-
-    .prose-rtl h1, .prose-rtl h2, .prose-rtl h3 {
-      font-weight: bold;
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
-    }
-
-    .prose-rtl h1 { font-size: 1.875rem; }
-    .prose-rtl h2 { font-size: 1.5rem; }
-    .prose-rtl h3 { font-size: 1.25rem; }
-
-    .prose-rtl ul, .prose-rtl ol {
-      margin: 1em 0;
-      padding-right: 1.5em;
-    }
-
-    .prose-rtl table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1em 0;
-    }
-
-    .prose-rtl th, .prose-rtl td {
-      border: 1px solid #d1d5db;
-      padding: 0.5em 1em;
-      text-align: right;
-    }
-
-    .prose-rtl th {
-      background-color: #f9fafb;
-      font-weight: bold;
-    }
-
-    .history-item {
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .history-item:hover {
-      background-color: #f8fafc;
-      transform: translateY(-1px);
-    }
-
-    .loading {
-      opacity: 0.7;
-      pointer-events: none;
     }
   </style>
+
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-
-<body class="flex flex-col min-h-screen bg-gray-50 font-vazir">
-
+<body class="flex flex-col min-h-screen bg-gray-50">
   <!-- Navbar -->
-  <nav class="bg-white shadow-sm border-b p-4 flex items-center justify-between">
-    <!-- Logo -->
+  <nav class="bg-white shadow p-4 flex items-center justify-between">
+    <!-- CSS-background logo -->
+    <div class="my-icon" role="img" aria-label="لوگو"></div>
+    
     <div class="flex items-center space-x-3 space-x-reverse">
-      <div class="my-icon" role="img" aria-label="لوگو DocRight"></div>
       <div>
-        <h1 class="text-xl font-bold text-gray-800">DocRight</h1>
+        <h1 class="text-xl font-bold text-gray-900">DocRight</h1>
         <p class="text-sm text-gray-500">تبدیل متن به Word</p>
       </div>
     </div>
-
-    <!-- Action Buttons -->
-    <div class="flex space-x-2 space-x-reverse">
-      <button id="btn-preview" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center space-x-2 space-x-reverse">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-        </svg>
-        <span>پیش‌نمایش</span>
-      </button>
-      <button id="btn-docx" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-200 flex items-center space-x-2 space-x-reverse">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <span>دانلود DOCX</span>
-      </button>
+    
+    <div class="flex items-center space-x-4 space-x-reverse">
+      <div id="char-count" class="text-sm text-gray-500">0 کاراکتر</div>
+      <div class="h-6 border-l border-gray-300"></div>
+      <div class="text-sm text-green-600 font-medium">آنلاین</div>
     </div>
   </nav>
 
   <!-- Main Content -->
-  <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
+  <main class="flex-1 max-w-4xl mx-auto px-6 py-8 w-full">
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Input Section -->
+      <div class="space-y-6">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">متن ورودی</h2>
+            <button 
+              id="btn-clear-input"
+              class="text-sm text-red-600 hover:text-red-700 transition-colors"
+            >
+              پاک کردن
+            </button>
+          </div>
+          <textarea 
+            id="input"
+            class="w-full h-80 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+            placeholder="متن خود را اینجا بنویسید...
 
-    <!-- Left Column: Instructions and Input -->
-    <section class="lg:col-span-3 space-y-8">
+مثال:
+# عنوان اصلی
+## عنوان فرعی
 
-      <!-- How It Works -->
-      <div class="bg-white p-6 rounded-xl shadow-sm border">
-        <h2 class="text-2xl font-bold mb-4 text-gray-800 flex items-center space-x-2 space-x-reverse">
-          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>چطور کار می‌کند؟</span>
-        </h2>
-        <ol class="list-decimal list-inside space-y-3 text-gray-700 leading-relaxed">
-          <li>متن خود را از هر منبعی (AI، یادداشت، وب) <strong>کپی</strong> کنید.</li>
-          <li>در کادر <em>ورودی</em> زیر <strong>پیست (paste)</strong> کنید.</li>
-          <li>با کلیک روی «پیش‌نمایش»، نتایج قالب‌بندی‌شده را مشاهده کنید.</li>
-          <li>روی «دانلود DOCX» کلیک کنید تا فایل Word با فرمت مناسب دریافت کنید.</li>
-        </ol>
-        
-        <div class="mt-4 p-4 bg-blue-50 rounded-lg">
-          <h3 class="font-semibold text-blue-800 mb-2">نکات مهم:</h3>
-          <ul class="text-sm text-blue-700 space-y-1">
-            <li>• از نشانه‌گذاری Markdown استفاده کنید (# برای عنوان، * برای لیست)</li>
-            <li>• جداول با | ایجاد کنید</li>
-            <li>• متن‌های طولانی بدون مشکل پردازش می‌شوند</li>
-          </ul>
+این یک **متن پررنگ** و این یک *متن کج* است.
+
+- آیتم اول
+- آیتم دوم
+- آیتم سوم
+
+| ستون ۱ | ستون ۲ | ستون ۳ |
+|---------|---------|---------|
+| سلول ۱ | سلول ۲ | سلول ۳ |
+
+> این یک نقل قول است.
+
+```
+کد نمونه
+```"
+          ></textarea>
         </div>
-      </div>
 
-      <!-- Input Area -->
-      <div class="bg-white p-6 rounded-xl shadow-sm border">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-800">ورودی متن</h2>
-          <button id="btn-clear-input" class="text-gray-500 hover:text-red-600 text-sm transition">
-            پاک کردن
+        <!-- Action Buttons -->
+        <div class="flex space-x-4 space-x-reverse">
+          <button 
+            id="btn-preview"
+            class="flex-1 flex items-center justify-center space-x-2 space-x-reverse bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            <span>پیش‌نمایش</span>
+          </button>
+          
+          <button 
+            id="btn-docx"
+            class="flex-1 flex items-center justify-center space-x-2 space-x-reverse bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>دانلود Word</span>
           </button>
         </div>
-        
-        <textarea id="input"
-          class="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 resize-none transition"
-          placeholder="# عنوان اصلی
-
-متن شما را اینجا وارد کنید...
-
-## زیرعنوان
-
-* نکته اول
-* نکته دوم
-* نکته سوم
-
-### جدول نمونه
-
-| ستون اول | ستون دوم | ستون سوم |
-|----------|----------|----------|
-| سلول ۱   | سلول ۲   | سلول ۳   |
-| سلول ۴   | سلول ۵   | سلول ۶   |
-
-**متن پررنگ** و *متن کج*"></textarea>
-        
-        <div class="flex items-center justify-between mt-3">
-          <p class="text-sm text-gray-500">
-            از <code class="bg-gray-100 px-2 py-1 rounded">Markdown</code> برای قالب‌بندی استفاده کنید.
-          </p>
-          <span id="char-count" class="text-xs text-gray-400">0 کاراکتر</span>
-        </div>
       </div>
 
-      <!-- Preview Area -->
-      <div class="bg-white p-6 rounded-xl shadow-sm border">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">پیش‌نمایش</h2>
-        <div id="preview"
-          class="prose prose-rtl bg-gray-50 p-6 rounded-lg min-h-[300px] max-h-[500px] overflow-auto border">
+      <!-- Preview Section -->
+      <div class="space-y-6">
+        <h2 class="text-lg font-semibold text-gray-900">پیش‌نمایش</h2>
+        <div 
+          id="preview"
+          class="min-h-80 p-6 bg-white border border-gray-300 rounded-lg prose prose-sm max-w-none"
+        >
           <div class="text-center text-gray-400 italic py-12">
             <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             <p>نتایج قالب‌بندی‌شده اینجا نمایش داده می‌شوند</p>
-            <p class="text-sm mt-2">متن خود را وارد کرده و روی پیش‌نمایش کلیک کنید</p>
           </div>
         </div>
       </div>
+    </div>
 
-    </section>
-
-    <!-- Right Column: History -->
-    <aside class="lg:col-span-1 flex flex-col">
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-800">تاریخچه</h2>
-          <button id="btn-clear-history" class="text-red-600 text-sm hover:underline transition">
-            پاک کردن
-          </button>
-        </div>
-
-        <ul id="history" class="space-y-3 max-h-[600px] overflow-auto">
-          <!-- JS will inject history items here -->
-        </ul>
-
-        <div id="history-empty" class="text-center text-gray-400 py-8">
-          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-sm">هنوز موردی ذخیره نشده</p>
+    <!-- History Section -->
+    <div class="mt-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold text-gray-900">تاریخچه</h2>
+        <button 
+          id="btn-clear-history"
+          class="text-sm text-red-600 hover:text-red-700 transition-colors"
+        >
+          پاک کردن تاریخچه
+        </button>
+      </div>
+      <div 
+        id="history"
+        class="bg-white border border-gray-300 rounded-lg p-6"
+      >
+        <div class="text-center text-gray-400 italic py-4">
+          تاریخچه خالی است
         </div>
       </div>
-
-    </aside>
-
+    </div>
   </main>
+
+  <!-- Features Info -->
+  <section class="bg-white border-t py-12">
+    <div class="max-w-4xl mx-auto px-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-6 text-center">ویژگی‌های DocRight</h3>
+      <div class="grid md:grid-cols-3 gap-6 text-center">
+        <div class="p-4">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h4 class="font-medium text-gray-900 mb-2">سرعت بالا</h4>
+          <p class="text-sm text-gray-600">تبدیل فوری متن‌های markdown به فرمت Word</p>
+        </div>
+        <div class="p-4">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h4 class="font-medium text-gray-900 mb-2">سازگار با فارسی</h4>
+          <p class="text-sm text-gray-600">پشتیبانی کامل از متن‌های راست‌چین فارسی</p>
+        </div>
+        <div class="p-4">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+          </div>
+          <h4 class="font-medium text-gray-900 mb-2">امن و خصوصی</h4>
+          <p class="text-sm text-gray-600">همه عملیات در مرورگر شما انجام می‌شود</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Footer -->
   <footer class="bg-white border-t text-center py-6 text-sm text-gray-500">
@@ -271,10 +227,7 @@
     class DocRight {
       constructor() {
         this.history = this.loadHistory();
-        this.measurementId = 'G-X9B77HX3KT';
-        this.apiSecret = 'IjyeGKEFTJun8jHtcM_Jwg';
         this.clientId = this.getOrCreateClientId();
-        this.sessionId = Date.now().toString();
         this.initializeEventListeners();
         this.renderHistory();
         this.updateCharCount();
@@ -291,62 +244,36 @@
         return clientId;
       }
 
-      // Enhanced analytics with Measurement Protocol
-      async sendMeasurementProtocolEvent(eventName, parameters = {}) {
-        try {
-          const payload = {
-            client_id: this.clientId,
-            events: [{
-              name: eventName,
-              params: {
-                session_id: this.sessionId,
-                engagement_time_msec: 1,
-                ...parameters
-              }
-            }]
-          };
-
-          await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${this.measurementId}&api_secret=${this.apiSecret}`, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-        } catch (error) {
-          console.warn('Measurement Protocol event failed:', error);
-        }
-      }
-
-      // Unified event tracking method
+      // Clean client-side analytics only (no CORS issues)
       trackEvent(eventName, parameters = {}) {
-        // Client-side tracking
         if (typeof gtag !== 'undefined') {
           gtag('event', eventName, parameters);
+          console.log('✅ Analytics event:', eventName, parameters);
+        } else {
+          console.log('⚠️ Analytics not loaded:', eventName, parameters);
         }
-
-        // Server-side tracking via Measurement Protocol
-        this.sendMeasurementProtocolEvent(eventName, parameters);
       }
 
-      // Track page view with both methods
+      // Track page view
       trackPageView() {
-        // Client-side tracking
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'page_view', {
-            'page_title': 'DocRight - تبدیل متن به Word',
-            'page_location': window.location.href
-          });
-        }
-
-        // Server-side tracking via Measurement Protocol
-        this.sendMeasurementProtocolEvent('page_view', {
+        this.trackEvent('page_view', {
           page_title: 'DocRight - تبدیل متن به Word',
           page_location: window.location.href
         });
       }
 
+      updateCharCount() {
+        const input = document.getElementById('input');
+        const count = input.value.length;
+        document.getElementById('char-count').textContent = `${count.toLocaleString('fa-IR')} کاراکتر`;
+      }
+
       initializeEventListeners() {
+        // Character count update
+        document.getElementById('input').addEventListener('input', () => {
+          this.updateCharCount();
+        });
+
         // Preview button
         document.getElementById('btn-preview').addEventListener('click', () => {
           this.generatePreview();
@@ -356,7 +283,7 @@
           });
         });
 
-        // DOCX button
+        // DOCX button  
         document.getElementById('btn-docx').addEventListener('click', () => {
           this.generateDocx();
           this.trackEvent('docx_download_initiated', {
@@ -389,11 +316,6 @@
           this.clearHistory();
         });
 
-        // Character count
-        document.getElementById('input').addEventListener('input', () => {
-          this.updateCharCount();
-        });
-
         // Auto-preview on input (debounced)
         let previewTimeout;
         document.getElementById('input').addEventListener('input', () => {
@@ -407,12 +329,6 @@
         });
       }
 
-      updateCharCount() {
-        const input = document.getElementById('input');
-        const count = input.value.length;
-        document.getElementById('char-count').textContent = `${count.toLocaleString('fa-IR')} کاراکتر`;
-      }
-
       generatePreview(saveToHistory = true) {
         const input = document.getElementById('input').value.trim();
         
@@ -422,15 +338,45 @@
         }
 
         try {
+          // Check if marked.js is loaded
+          if (typeof marked === 'undefined') {
+            throw new Error('کتابخانه Markdown یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید.');
+          }
+
           const html = marked.parse(input);
           document.getElementById('preview').innerHTML = html;
           
           if (saveToHistory) {
             this.addToHistory(input);
           }
+
+          // Track preview generation with content length
+          this.trackEvent('content_previewed', {
+            event_category: 'content_interaction',
+            content_length: input.length,
+            has_markdown: input.includes('#') || input.includes('*') || input.includes('|')
+          });
+
         } catch (error) {
           console.error('Error generating preview:', error);
-          alert('خطا در تولید پیش‌نمایش. لطفاً متن خود را بررسی کنید.');
+          const errorMsg = error.message || 'خطا در تولید پیش‌نمایش. لطفاً متن خود را بررسی کنید.';
+          alert(errorMsg);
+          
+          // Show error in preview area
+          document.getElementById('preview').innerHTML = `
+            <div class="text-center text-red-500 py-12">
+              <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <p>خطا در پردازش متن</p>
+              <p class="text-sm mt-2">${errorMsg}</p>
+            </div>
+          `;
+          
+          this.trackEvent('preview_error', {
+            event_category: 'error',
+            error_message: error.message
+          });
         }
       }
 
@@ -498,7 +444,7 @@
             }
           }, 3000);
           
-          // Track successful DOCX generation
+          // Track successful generation
           this.trackEvent('docx_generated_success', {
             event_category: 'conversion',
             content_length: input.length,
@@ -509,7 +455,7 @@
           console.error('Error generating DOCX:', error);
           alert('خطا در تولید فایل Word. لطفاً دوباره تلاش کنید.');
           
-          // Track DOCX generation error
+          // Track generation error
           this.trackEvent('docx_generation_error', {
             event_category: 'error',
             error_message: error.message
@@ -604,43 +550,74 @@
       }
 
       addToHistory(content) {
-        const item = {
+        const entry = {
           id: Date.now(),
           content: content,
-          preview: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-          timestamp: new Date().toLocaleDateString('fa-IR')
+          snippet: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+          timestamp: new Date().toLocaleDateString('fa-IR', {
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
         };
 
-        this.history.unshift(item);
+        this.history.unshift(entry);
         
-        // Keep only last 10 items
+        // Keep only last 10 entries
         if (this.history.length > 10) {
           this.history = this.history.slice(0, 10);
         }
-
+        
         this.saveHistory();
         this.renderHistory();
       }
 
+      loadHistory() {
+        try {
+          return JSON.parse(localStorage.getItem('docright_history') || '[]');
+        } catch (error) {
+          console.warn('Error loading history:', error);
+          return [];
+        }
+      }
+
+      saveHistory() {
+        try {
+          localStorage.setItem('docright_history', JSON.stringify(this.history));
+        } catch (error) {
+          console.warn('Error saving history:', error);
+        }
+      }
+
       renderHistory() {
         const historyContainer = document.getElementById('history');
-        const emptyState = document.getElementById('history-empty');
         
         if (this.history.length === 0) {
-          historyContainer.style.display = 'none';
-          emptyState.style.display = 'block';
+          historyContainer.innerHTML = `
+            <div class="text-center text-gray-400 italic py-4">
+              تاریخچه خالی است
+            </div>
+          `;
           return;
         }
 
-        historyContainer.style.display = 'block';
-        emptyState.style.display = 'none';
-
-        historyContainer.innerHTML = this.history.map(item => `
-          <li class="history-item p-3 border border-gray-200 rounded-lg hover:shadow-sm" data-id="${item.id}">
-            <div class="text-sm text-gray-800 mb-1 line-clamp-2">${item.preview}</div>
-            <div class="text-xs text-gray-500">${item.timestamp}</div>
-          </li>
+        const historyHtml = this.history.map(entry => `
+          <div class="history-item border-b border-gray-200 last:border-b-0 py-4 cursor-pointer hover:bg-gray-50 rounded-lg px-3 transition-colors" data-id="${entry.id}">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="text-sm text-gray-500 mb-1">${entry.timestamp}</div>
+                <div class="text-gray-800 text-sm">${entry.snippet}</div>
+              </div>
+              <svg class="w-4 h-4 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
         `).join('');
+
+        historyContainer.innerHTML = historyHtml;
 
         // Add click handlers
         historyContainer.querySelectorAll('.history-item').forEach(item => {
@@ -674,23 +651,6 @@
           });
         }
       }
-
-      loadHistory() {
-        try {
-          const saved = localStorage.getItem('docright_history');
-          return saved ? JSON.parse(saved) : [];
-        } catch {
-          return [];
-        }
-      }
-
-      saveHistory() {
-        try {
-          localStorage.setItem('docright_history', JSON.stringify(this.history));
-        } catch (error) {
-          console.warn('Could not save history to localStorage:', error);
-        }
-      }
     }
 
     // Initialize app when DOM is loaded
@@ -698,6 +658,5 @@
       new DocRight();
     });
   </script>
-
 </body>
 </html>
