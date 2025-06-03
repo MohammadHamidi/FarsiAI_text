@@ -7,6 +7,9 @@
   <title>DocRight - تبدیل متن به Word</title>
   <meta name="description" content="تبدیل آسان متن‌های markdown به فایل‌های Word با قالب‌بندی مناسب" />
   
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+  
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-X9B77HX3KT"></script>
   <script>
@@ -32,12 +35,6 @@
 
   <!-- Markdown parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  
-  <!-- DOCX generation library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
-  
-  <!-- File saver -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
   <!-- Custom styles -->
   <style>
@@ -263,6 +260,9 @@
     <div class="max-w-4xl mx-auto px-6">
       <p>© 2025 DocRight — ابزار تبدیل متن به Word</p>
       <p class="mt-1">ساخته شده با ❤️ برای کاربران فارسی‌زبان</p>
+      <p class="mt-2 text-xs text-gray-400">
+        نسخه 2.0 | فایل‌های تولیدی در فرمت HTML/DOC که توسط Microsoft Word قابل باز کردن هستند
+      </p>
     </div>
   </footer>
 
@@ -367,16 +367,21 @@
 
         // Clear input
         document.getElementById('btn-clear-input').addEventListener('click', () => {
-          document.getElementById('input').value = '';
-          this.updateCharCount();
-          document.getElementById('preview').innerHTML = `
-            <div class="text-center text-gray-400 italic py-12">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <p>نتایج قالب‌بندی‌شده اینجا نمایش داده می‌شوند</p>
-            </div>
-          `;
+          if (confirm('آیا مطمئن هستید که می‌خواهید متن ورودی را پاک کنید؟')) {
+            document.getElementById('input').value = '';
+            this.updateCharCount();
+            document.getElementById('preview').innerHTML = `
+              <div class="text-center text-gray-400 italic py-12">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p>نتایج قالب‌بندی‌شده اینجا نمایش داده می‌شوند</p>
+              </div>
+            `;
+            this.trackEvent('input_cleared', {
+              event_category: 'user_interaction'
+            });
+          }
         });
 
         // Clear history
@@ -395,7 +400,7 @@
           clearTimeout(previewTimeout);
           previewTimeout = setTimeout(() => {
             const inputValue = document.getElementById('input').value.trim();
-            if (inputValue) {
+            if (inputValue && typeof marked !== 'undefined') {
               this.generatePreview(false); // Silent preview
             }
           }, 1000);
@@ -455,20 +460,43 @@
           // Convert markdown to HTML
           const html = marked.parse(input);
           
-          // Create DOCX document
-          const doc = new docx.Document({
-            sections: [{
-              properties: {},
-              children: await this.convertHtmlToDocxElements(html)
-            }]
+          // Create RTL HTML document for Word
+          const docContent = this.createWordDocument(html, input);
+          
+          // Create blob and download
+          const blob = new Blob([docContent], {
+            type: 'text/html;charset=utf-8'
           });
-
-          // Generate and save file
-          const blob = await docx.Packer.toBlob(doc);
-          const fileName = `DocRight_${new Date().toISOString().slice(0,10)}.docx`;
-          saveAs(blob, fileName);
+          
+          const fileName = `DocRight_${new Date().toISOString().slice(0,10)}.doc`;
+          
+          // Create download link
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fileName;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          
+          // Cleanup
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+          }, 100);
 
           this.addToHistory(input);
+          
+          // Show success message
+          const successMsg = document.createElement('div');
+          successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+          successMsg.textContent = '✅ فایل Word با موفقیت دانلود شد';
+          document.body.appendChild(successMsg);
+          
+          setTimeout(() => {
+            if (document.body.contains(successMsg)) {
+              document.body.removeChild(successMsg);
+            }
+          }, 3000);
           
           // Track successful DOCX generation
           this.trackEvent('docx_generated_success', {
@@ -494,22 +522,85 @@
         }
       }
 
-      async convertHtmlToDocxElements(html) {
-        // Simple HTML to DOCX conversion
-        // This is a basic implementation - you might want to enhance it
-        const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-        
-        return [
-          new docx.Paragraph({
-            children: [
-              new docx.TextRun({
-                text: text,
-                font: "Tahoma"
-              })
-            ],
-            rightToLeft: true
-          })
-        ];
+      createWordDocument(html, originalText) {
+        // Create RTL HTML document that can be opened by Word
+        return `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocRight Document</title>
+    <style>
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            line-height: 1.6;
+            margin: 2cm;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; }
+        h3 { font-size: 18px; }
+        p { margin: 1em 0; }
+        ul, ol { 
+            margin: 1em 0; 
+            padding-right: 2em; 
+        }
+        li { margin: 0.5em 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            direction: rtl;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        blockquote {
+            border-right: 3px solid #3498db;
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            background-color: #f8f9fa;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        strong { color: #2c3e50; }
+        em { font-style: italic; }
+    </style>
+</head>
+<body>
+    ${html}
+    
+    <hr style="margin-top: 3em; border: none; border-top: 1px solid #ddd;">
+    <p style="font-size: 12px; color: #666; text-align: center;">
+        تولید شده توسط DocRight - ${new Date().toLocaleDateString('fa-IR')}
+    </p>
+</body>
+</html>`;
       }
 
       addToHistory(content) {
