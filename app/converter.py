@@ -3,12 +3,238 @@ import os
 import logging
 from datetime import datetime, timedelta
 import glob
+from pathlib import Path
 # Ensure these are correctly imported from your config module
 # and that the config module itself is correctly set up.
 from .config import OUT_DIR, ALLOWED, MAX_FILE_AGE_HOURS
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+
+def create_reference_docx():
+    """
+    Create a proper RTL reference document for better Farsi rendering
+    """
+    reference_path = Path(OUT_DIR) / "reference_farsi.docx"
+
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor
+        from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_LINE_SPACING
+        from docx.enum.style import WD_STYLE_TYPE
+        from docx.oxml.shared import OxmlElement, qn
+        from docx.oxml import parse_xml
+
+        logger.info("Creating enhanced RTL reference document")
+
+        # Create new document
+        doc = Document()
+
+        # Configure document defaults for RTL
+        section = doc.sections[0]
+        section.page_height = Pt(842)  # A4 height
+        section.page_width = Pt(595)   # A4 width
+        section.left_margin = Pt(72)   # 1 inch
+        section.right_margin = Pt(72)  # 1 inch
+        section.top_margin = Pt(72)    # 1 inch
+        section.bottom_margin = Pt(72) # 1 inch
+
+        # Get styles object
+        styles = doc.styles
+
+        # Configure Normal style for RTL
+        normal_style = styles['Normal']
+        normal_font = normal_style.font
+        normal_font.name = 'DejaVu Sans'  # Available font with Unicode support
+        normal_font.size = Pt(12)
+        normal_font.complex_script = True  # Enable complex script support
+
+        # Set RTL alignment
+        normal_para = normal_style.paragraph_format
+        normal_para.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+        normal_para.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        normal_para.space_after = Pt(6)
+
+        # Add RTL properties to normal style
+        normal_style_element = normal_style._element
+        pPr = normal_style_element.find(qn('w:pPr'))
+        if pPr is None:
+            pPr = OxmlElement('w:pPr')
+            normal_style_element.insert(0, pPr)
+
+        # Add BiDi (bi-directional) property
+        bidi = pPr.find(qn('w:bidi'))
+        if bidi is None:
+            bidi = OxmlElement('w:bidi')
+            pPr.append(bidi)
+
+        # Configure heading styles
+        for i in range(1, 7):
+            heading_style = styles[f'Heading {i}']
+            heading_font = heading_style.font
+            heading_font.name = 'DejaVu Sans'
+            heading_font.complex_script = True
+            heading_font.bold = True
+
+            # Set appropriate sizes
+            sizes = {1: 18, 2: 16, 3: 14, 4: 13, 5: 12, 6: 11}
+            heading_font.size = Pt(sizes[i])
+
+            # Set RTL alignment for headings
+            heading_para = heading_style.paragraph_format
+            heading_para.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+            heading_para.space_before = Pt(12)
+            heading_para.space_after = Pt(6)
+
+            # Add RTL properties to heading style
+            heading_style_element = heading_style._element
+            pPr = heading_style_element.find(qn('w:pPr'))
+            if pPr is None:
+                pPr = OxmlElement('w:pPr')
+                heading_style_element.insert(0, pPr)
+
+            bidi = pPr.find(qn('w:bidi'))
+            if bidi is None:
+                bidi = OxmlElement('w:bidi')
+                pPr.append(bidi)
+
+        # Modify existing Strong character style for proper bold formatting
+        try:
+            # Try to get existing style first
+            strong_style = styles['Strong']
+        except KeyError:
+            # Create new style if it doesn't exist
+            strong_style = styles.add_style('Strong', WD_STYLE_TYPE.CHARACTER)
+
+        strong_font = strong_style.font
+        strong_font.bold = True
+        strong_font.name = 'DejaVu Sans'
+        strong_font.complex_script = True
+
+        # Add complex script bold property
+        strong_style_element = strong_style._element
+        rPr = strong_style_element.find(qn('w:rPr'))
+        if rPr is None:
+            rPr = OxmlElement('w:rPr')
+            strong_style_element.insert(0, rPr)
+
+        # Clear existing formatting and add both regular and complex script bold
+        # Remove existing b and bCs elements
+        for b_elem in rPr.findall(qn('w:b')):
+            rPr.remove(b_elem)
+        for bcs_elem in rPr.findall(qn('w:bCs')):
+            rPr.remove(bcs_elem)
+
+        # Add both regular and complex script bold
+        b_element = OxmlElement('w:b')
+        bCs_element = OxmlElement('w:bCs')
+        rPr.append(b_element)
+        rPr.append(bCs_element)
+
+        # Modify existing Emphasis character style
+        try:
+            # Try to get existing style first
+            emphasis_style = styles['Emphasis']
+        except KeyError:
+            # Create new style if it doesn't exist
+            emphasis_style = styles.add_style('Emphasis', WD_STYLE_TYPE.CHARACTER)
+
+        emphasis_font = emphasis_style.font
+        emphasis_font.italic = True
+        emphasis_font.name = 'DejaVu Sans'
+        emphasis_font.complex_script = True
+
+        # Add complex script italic property
+        emphasis_style_element = emphasis_style._element
+        rPr = emphasis_style_element.find(qn('w:rPr'))
+        if rPr is None:
+            rPr = OxmlElement('w:rPr')
+            emphasis_style_element.insert(0, rPr)
+
+        # Clear existing formatting and add both regular and complex script italic
+        # Remove existing i and iCs elements
+        for i_elem in rPr.findall(qn('w:i')):
+            rPr.remove(i_elem)
+        for ics_elem in rPr.findall(qn('w:iCs')):
+            rPr.remove(ics_elem)
+
+        # Add both regular and complex script italic
+        i_element = OxmlElement('w:i')
+        iCs_element = OxmlElement('w:iCs')
+        rPr.append(i_element)
+        rPr.append(iCs_element)
+
+        # Also ensure the default styles are set up correctly
+        # Modify the default strong and emphasis styles that Pandoc uses
+        try:
+            # Pandoc uses 'Strong' for **bold** and 'Emphasis' for *italic*
+            # Make sure these are properly configured
+            styles['Strong'].font.bold = True
+            styles['Strong'].font.complex_script = True
+            styles['Emphasis'].font.italic = True
+            styles['Emphasis'].font.complex_script = True
+        except KeyError:
+            pass
+
+        # Configure Table styles for RTL
+        try:
+            table_style = styles['Table Grid']
+            table_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+        except KeyError:
+            logger.warning("Table Grid style not found")
+
+        # Add sample content to establish proper formatting
+        doc.add_heading('نمونه سند فارسی', 0)
+
+        p1 = doc.add_paragraph('این یک نمونه متن فارسی است که برای تنظیم قالب‌بندی RTL استفاده می‌شود.')
+
+        doc.add_heading('عنوان اول', level=1)
+
+        # Create paragraph with mixed formatting using our custom styles
+        p2 = doc.add_paragraph()
+        p2.add_run('متن عادی، ').bold = False
+        p2.add_run('متن پررنگ').bold = True
+        p2.add_run(' و ')
+        p2.add_run('متن کج').italic = True
+        p2.add_run('.')
+
+        # Add a paragraph that uses the Strong and Emphasis character styles explicitly
+        p3 = doc.add_paragraph()
+        run1 = p3.add_run('متن عادی ')
+        run2 = p3.add_run('پررنگ')
+        run2.style = styles['Strong']  # Explicitly use Strong style
+        run3 = p3.add_run(' و ')
+        run4 = p3.add_run('کج')
+        run4.style = styles['Emphasis']  # Explicitly use Emphasis style
+        run5 = p3.add_run(' با استایل‌های شخصی‌سازی شده')
+
+        # Add a table sample
+        table = doc.add_table(rows=2, cols=3)
+        table.style = 'Table Grid'
+
+        # Fill table with RTL content
+        cells = [
+            ['ستون ۳', 'ستون ۲', 'ستون ۱'],
+            ['سلول ۳', 'سلول ۲', 'سلول ۱']
+        ]
+
+        for row_idx, row in enumerate(table.rows):
+            for cell_idx, cell in enumerate(row.cells):
+                cell.text = cells[row_idx][cell_idx]
+                cell.paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+        # Save the reference document
+        doc.save(str(reference_path))
+        logger.info(f"RTL reference document created successfully: {reference_path}")
+        return reference_path
+
+    except ImportError:
+        logger.error("python-docx not available for creating reference document")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to create reference document: {e}")
+        return None
 
 def render_markdown(md_path: str, out_path: str, fmt: str):
     """
@@ -36,71 +262,52 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
     cmd = ["pandoc", md_path, "-o", out_path]
 
     if fmt == "docx":
-        # Enhanced Farsi font configuration
-        custom_farsi_font_name = "Arial"  # Using Arial as primary font for better compatibility
+        # Create enhanced reference document
+        reference_path = create_reference_docx()
 
-        # Basic RTL and language settings
-        cmd += [
-            "--metadata=lang:fa",
-            "--metadata=dir:rtl",
-            f"--variable=mainfont:{custom_farsi_font_name}",
+        # Enhanced RTL configuration
+        cmd.extend([
+            # Language and direction settings - CRITICAL for RTL
+            "--metadata=lang:fa",           # Persian language
+            "--metadata=dir:rtl",           # Right-to-left direction
+            "--metadata=documentclass:article",
+
+            # Font configuration using available fonts
+            "--variable=mainfont:DejaVu Sans",      # Available font with Unicode support
+            "--variable=sansfont:DejaVu Sans",
+            "--variable=monofont:DejaVu Sans Mono",
+
+            # Document formatting
             "--variable=fontsize:12pt",
-            "--variable=geometry:margin=1in",  # Standard margins
-            "--variable=linestretch:1.5",  # Better line spacing
-            "--variable=colorlinks=true",
-            "--variable=linkcolor=blue",
-            "--variable=urlcolor=blue",
-        ]
+            "--variable=linestretch:1.5",
+            "--variable=geometry:margin=2.54cm",    # Standard Word margins
 
-        # Use reference document for consistent styling
-        reference_docx_path = "/app/outputs/reference.docx"
-        if os.path.exists(reference_docx_path):
-            cmd += [f"--reference-doc={reference_docx_path}"]
-            logger.info(f"Using custom reference DOCX: '{reference_docx_path}'")
+            # RTL-specific options - CRITICAL
+            "--variable=rtl:true",
+
+            # Table of contents (if needed)
+            "--toc-depth=3",
+
+            # Better list formatting
+            "--variable=indent:true",
+
+            # Image handling
+            "--variable=graphics:true",
+        ])
+
+        # Use enhanced reference document if available
+        if reference_path and reference_path.exists():
+            cmd.append(f"--reference-doc={reference_path}")
+            logger.info(f"Using enhanced RTL reference document: {reference_path}")
         else:
-            logger.warning(f"Custom reference DOCX '{reference_docx_path}' not found. Creating one...")
-            # Create a basic reference document if it doesn't exist
-            try:
-                from docx import Document
-                from docx.shared import Pt
-                from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+            logger.warning("Enhanced reference document not available, using Pandoc defaults")
 
-                doc = Document()
-                styles = doc.styles
+        # Additional filters for better RTL handling
+        cmd.extend([
+            "--wrap=preserve",           # Preserve line wrapping
+        ])
 
-                # Configure Normal style
-                normal_style = styles['Normal']
-                normal_font = normal_style.font
-                normal_font.name = custom_farsi_font_name
-                normal_font.size = Pt(12)
-                normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
-
-                # Configure Heading 1
-                h1_style = styles['Heading 1']
-                h1_font = h1_style.font
-                h1_font.name = custom_farsi_font_name
-                h1_font.size = Pt(18)
-                h1_font.bold = True
-                h1_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
-
-                doc.save(reference_docx_path)
-                cmd += [f"--reference-doc={reference_docx_path}"]
-                logger.info(f"Created and using new reference DOCX: '{reference_docx_path}'")
-            except Exception as e:
-                logger.error(f"Failed to create reference DOCX: {e}")
-
-        # Advanced formatting options
-        cmd += [
-            "--variable=documentclass:article",
-            "--variable=classoption:twoside",  # For professional documents
-            "--variable=indent:true",  # Paragraph indentation
-            "--variable=subscript:true",  # Enable subscript
-            "--variable=superscript:true",  # Enable superscript
-            "--variable=strikeout:true",  # Enable strikeout
-            "--variable=underline:true",  # Enable underline
-        ]
-
-        logger.info(f"Enhanced DOCX configuration with RTL support, reference document, and advanced formatting.")
+        logger.info(f"Enhanced DOCX configuration with comprehensive RTL support.")
 
     logger.debug(f"Executing Pandoc command: \"{' '.join(cmd)}\"")
 
@@ -108,7 +315,7 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
         result = subprocess.run(
             cmd,
             check=True,
-            timeout=60,
+            timeout=120,  # Increased timeout for complex RTL documents
             capture_output=True,
             text=True,
             encoding='utf-8'

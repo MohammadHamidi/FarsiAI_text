@@ -1,10 +1,28 @@
-fastapi>=0.95.0
-uvicorn[standard]>=0.21.0
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
 python-multipart>=0.0.6
+
+# Pydantic (keeping v1 for compatibility)
 pydantic>=1.10.7,<2.0.0
-python-dotenv
-python-docx
-aiofiles
-firebase-admin
-httpx
-firebase-admin 
+python-dotenv>=1.0.0
+
+# Document processing - CRITICAL for DOCX generation
+python-docx>=1.1.0
+lxml>=4.9.0
+
+# File handling
+aiofiles>=23.0.0
+
+# Firebase and analytics
+firebase-admin>=6.2.0
+httpx>=0.25.0
+
+# Text processing and Unicode handling - ENHANCED for RTL
+unicodedata2>=15.0.0; sys_platform != "darwin"
+regex>=2023.10.3
+chardet>=5.2.0
+ftfy>=6.1.1  # Fix text encoding issues
+
+# Optional: PDF generation support
+# reportlab>=4.0.0
+# weasyprint>=60.0 
