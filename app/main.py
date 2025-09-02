@@ -14,6 +14,7 @@ from typing import Dict, Any, Callable # Keep Callable if used
 from .converter import render_markdown, cleanup_old_files
 from .config import settings, OUT_DIR # settings.ALLOWED_FORMATS will be {"docx"}
 from .firebase_utils import initialize_firebase, track_event # Add Firebase imports
+from .utils.text_processor import preprocess_farsi_text # Enhanced text processing
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -74,6 +75,11 @@ def schedule_cleanup():
     except Exception as e:
         logger.error(f"Error during scheduled cleanup: {e}")
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "message": "DocRight API is running"}
+
 @app.get("/", response_class=HTMLResponse)
 async def homepage():
     try:
@@ -120,7 +126,7 @@ async def convert(
         user_ip = request.client.host if request.client else None
         user_agent = request.headers.get("user-agent")
         await track_event(
-            "conversion_requested", 
+            "conversion_requested",
             {"format": format, "text_length": len(text)},
             user_ip=user_ip,
             user_agent=user_agent
@@ -134,8 +140,12 @@ async def convert(
     logger.info(f"Converting to {format}, text length: {len(text)} chars, UID: {uid}")
 
     try:
+        # Preprocess text with Farsi enhancements
+        processed_text = preprocess_farsi_text(text)
+        logger.info(f"Text preprocessing completed. Original: {len(text)}, Processed: {len(processed_text)} chars")
+
         with open(md_file, "w", encoding="utf-8") as f:
-            f.write(text)
+            f.write(processed_text)
     except Exception as e:
         logger.error(f"Failed to write markdown file {md_file}: {e}", exc_info=True)
         raise HTTPException(500, "Failed to process your request (writing md)")

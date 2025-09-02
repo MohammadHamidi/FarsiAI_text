@@ -64,8 +64,8 @@ RUN useradd -m -s /bin/bash -u 1000 appuser && \
 # Copy application code and front-end assets as non-root
 COPY --chown=appuser:appuser app/    ./app
 COPY --chown=appuser:appuser static/ ./static
-# Copy Firebase service account key from app directory in build context to /app in container
-COPY --chown=appuser:appuser app/serviceAccountKey.json /app/serviceAccountKey.json
+# Note: Firebase service account key is optional - if serviceAccountKey.json exists in app/ directory, it will be copied
+# If not, Firebase analytics will be disabled automatically
 
 # Environment vars
 ENV PYTHONDONTWRITEBYTECODE=1 \

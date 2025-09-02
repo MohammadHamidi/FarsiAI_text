@@ -1,0 +1,116 @@
+راهنمای جامع n8n برای Facebook Graph API و Instagram - گام به گام
+🚀 مقدمه
+این راهنما به طور کامل نحوه پیکربندی و استفاده از Facebook Graph API و Instagram در پلتفرم n8n را آموزش می‌دهد. شما یاد خواهید گرفت که چگونه:
+
+اپلیکیشن Facebook ایجاد کنید
+Access Token های مختلف دریافت کنید
+Credential های n8n را پیکربندی کنید
+Workflow های اتوماسیون ایجاد کنید
+محتوا را در Instagram و Facebook انتشار دهید
+
+
+📋 فهرست مطالب
+
+پیش‌نیازها و تنظیمات اولیه
+ایجاد اپلیکیشن Facebook
+تنظیم Instagram Business Account
+دریافت Access Token ها
+پیکربندی n8n Credentials
+ایجاد Workflow های عملی
+عیب‌یابی و حل مشکل
+بهینه‌سازی و نکات پیشرفته
+
+
+پیش‌نیازها و تنظیمات اولیه {#prerequisites}
+✅ چیزهایی که نیاز دارید:
+
+حساب Facebook Developer
+Instagram Business یا Creator Account (حساب‌های شخصی دیگر پشتیبانی نمی‌شوند)
+Facebook Page متصل به Instagram
+n8n Instance (Cloud یا Self-hosted)
+دسترسی Admin به Facebook Page
+
+⚠️ نکات مهم:
+Instagram Basic Display API در دسامبر 2024 منقرض شد
+تنها حساب‌های Professional Instagram قابل دسترسی هستند
+انتشار محتوا محدود به 50 پست در 24 ساعت است
+
+ایجاد اپلیکیشن Facebook {#facebook-app}
+مرحله 1: ایجاد Meta App
+
+به Facebook Developer Dashboard بروید
+روی "Create App" کلیک کنید
+یک App name و contact email وارد کنید
+وقتی از Use case پرسیده شد، "Other" را انتخاب کنید
+برای App type، "Business" را انتخاب کنید
+روی "Create App" کلیک کنید
+
+مرحله 2: اضافه کردن Products
+برای Instagram، باید Instagram Graph API را اضافه کنید
+در Dashboard اپ خود:
+
+به Products بروید
+Instagram را پیدا کرده و "Set up" کنید
+Facebook Login را نیز اضافه کنید
+
+مرحله 3: تنظیمات Basic
+در Settings → Basic:
+
+App ID و App Secret را کپی کنید (بعداً نیاز دارید)
+App Domains را تنظیم کنید
+Privacy Policy URL را اضافه کنید (برای Live mode)
+
+
+تنظیم Instagram Business Account {#instagram-setup}
+مرحله 1: تبدیل حساب به Professional
+Instagram account باید Professional باشد
+در اپ Instagram:
+Settings → Account → Switch to Professional Account
+مرحله 2: اتصال به Facebook Page
+حساب Instagram باید به Facebook Page متصل باشد
+
+در Instagram: Settings → Account → Linked Accounts → Facebook
+صفحه مورد نظر را انتخاب کنید
+اتصال را تأیید کنید
+
+مرحله 3: اضافه کردن Tester
+در App Dashboard، باید Instagram account را به عنوان tester اضافه کنید
+در Facebook App Dashboard:
+
+App Roles → Roles بروید
+"Add People" کنید
+"Instagram Tester" را انتخاب کنید
+Username Instagram خود را وارد کنید
+
+مرحله 4: تأیید Tester Invite
+در Instagram:
+Settings → Website Permissions → Apps and Websites → Tester Invites
+دعوت‌نامه را تأیید کنید.
+
+دریافت Access Token ها {#access-tokens}
+نوع 1: App Access Token
+برای عملیات کلی اپ
+مراحل:
+
+به Graph API Explorer بروید
+Meta App خود را انتخاب کنید
+در "User or Page" گزینه "Get App Token" را انتخاب کنید
+"Generate Access Token" کنید
+Token را کپی کنید
+
+نوع 2: User Access Token
+برای دسترسی به اطلاعات کاربر
+مراحل:
+
+در Graph API Explorer، "Get User Access Token" را انتخاب کنید
+Permissions مورد نیاز را انتخاب کنید:
+
+pages_show_list
+pages_read_engagement
+pages_manage_posts
+instagram_basic
+instagram_content_publish
+
+
+"Generate Access Token" کنید
+مجوزها را تأیید کنید

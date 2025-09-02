@@ -59,6 +59,73 @@
 
   <!-- Markdown parser -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Enhanced Markdown processor for Farsi -->
+  <script>
+    // Enhanced Marked.js configuration for Farsi
+    marked.setOptions({
+      breaks: true,        // Convert line breaks to <br>
+      gfm: true,          // GitHub Flavored Markdown
+      headerIds: true,    // Add IDs to headers
+      mangle: false,      // Don't mangle email addresses
+      sanitize: false,    // Allow HTML in markdown
+      smartLists: true,   // Use smarter list behavior
+      smartypants: true,  // Use "smart" typographic punctuation
+      xhtml: false        // Don't use self-closing tags
+    });
+
+    // Custom renderer for Farsi-specific enhancements
+    const renderer = new marked.Renderer();
+
+    // Enhanced table rendering with RTL support
+    renderer.table = function(header, body) {
+      return `<table dir="rtl" style="direction: rtl; text-align: right; width: 100%; border-collapse: collapse; margin: 1em 0;">
+        <thead>${header}</thead>
+        <tbody>${body}</tbody>
+      </table>`;
+    };
+
+    renderer.tablerow = function(content) {
+      return `<tr style="border-bottom: 1px solid #ddd;">${content}</tr>`;
+    };
+
+    renderer.tablecell = function(content, flags) {
+      const type = flags.header ? 'th' : 'td';
+      const style = flags.header
+        ? 'border: 1px solid #ddd; padding: 8px 12px; background-color: #f2f2f2; font-weight: bold; text-align: right;'
+        : 'border: 1px solid #ddd; padding: 8px 12px; text-align: right;';
+      return `<${type} style="${style}">${content}</${type}>`;
+    };
+
+    // Enhanced code block rendering
+    renderer.code = function(code, language, escaped) {
+      const lang = language || '';
+      return `<pre style="background-color: #f4f4f4; padding: 1em; border-radius: 5px; overflow-x: auto; direction: ltr; text-align: left;"><code class="language-${lang}" style="font-family: 'Courier New', monospace;">${escaped ? code : escape(code)}</code></pre>`;
+    };
+
+    renderer.codespan = function(code) {
+      return `<code style="background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; direction: ltr;">${code}</code>`;
+    };
+
+    // Enhanced list rendering for RTL
+    renderer.list = function(body, ordered, start) {
+      const type = ordered ? 'ol' : 'ul';
+      const startAttr = (ordered && start !== 1) ? ` start="${start}"` : '';
+      return `<${type}${startAttr} style="direction: rtl; text-align: right; padding-right: 2em; margin: 1em 0;">${body}</${type}>`;
+    };
+
+    renderer.listitem = function(text) {
+      return `<li style="margin: 0.5em 0; text-align: right;">${text}</li>`;
+    };
+
+    // Enhanced blockquote rendering
+    renderer.blockquote = function(quote) {
+      return `<blockquote style="border-right: 3px solid #3498db; margin: 1em 0; padding: 0.5em 1em; background-color: #f8f9fa; direction: rtl; text-align: right;">${quote}</blockquote>`;
+    };
+
+    // Apply custom renderer
+    marked.use({ renderer });
+  </script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-50">
   <!-- Navbar -->
@@ -526,82 +593,183 @@
       }
 
       createWordDocument(html, originalText) {
-        // Create RTL HTML document that can be opened by Word
+        // Create enhanced RTL HTML document optimized for Word
         return `<!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="DocRight">
     <title>DocRight Document</title>
     <style>
+        /* Enhanced typography for professional documents */
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm 2.5cm 2cm;
+        }
+
         body {
-            font-family: 'Tahoma', 'Arial', sans-serif;
+            font-family: 'Arial', 'Tahoma', sans-serif;
             direction: rtl;
             text-align: right;
             line-height: 1.6;
-            margin: 2cm;
-            color: #333;
+            margin: 0;
+            padding: 0;
+            color: #2c3e50;
+            font-size: 12pt;
         }
+
+        /* Enhanced header styling */
         h1, h2, h3, h4, h5, h6 {
             color: #2c3e50;
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            page-break-after: avoid;
         }
-        h1 { font-size: 24px; }
-        h2 { font-size: 20px; }
-        h3 { font-size: 18px; }
-        p { margin: 1em 0; }
-        ul, ol { 
-            margin: 1em 0; 
-            padding-right: 2em; 
+
+        h1 {
+            font-size: 18pt;
+            border-bottom: 2pt solid #3498db;
+            padding-bottom: 6pt;
         }
-        li { margin: 0.5em 0; }
+        h2 { font-size: 16pt; }
+        h3 { font-size: 14pt; }
+        h4 { font-size: 12pt; font-style: italic; }
+
+        /* Enhanced paragraph styling */
+        p {
+            margin: 6pt 0;
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
+        /* Enhanced list styling */
+        ul, ol {
+            margin: 12pt 0;
+            padding-right: 24pt;
+        }
+
+        li {
+            margin: 6pt 0;
+            text-align: right;
+        }
+
+        /* Enhanced table styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1em 0;
+            margin: 12pt 0;
             direction: rtl;
+            border: 1pt solid #ddd;
         }
+
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
+            border: 1pt solid #ddd;
+            padding: 8pt 12pt;
             text-align: right;
+            vertical-align: top;
         }
+
         th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        blockquote {
-            border-right: 3px solid #3498db;
-            margin: 1em 0;
-            padding: 0.5em 1em;
             background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
         }
+
+        /* Enhanced blockquote styling */
+        blockquote {
+            border-right: 3pt solid #3498db;
+            margin: 12pt 0;
+            padding: 8pt 12pt;
+            background-color: #f8f9fa;
+            font-style: italic;
+            border-radius: 0 4pt 4pt 0;
+        }
+
+        /* Enhanced code styling */
         code {
             background-color: #f4f4f4;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
+            padding: 2pt 4pt;
+            border-radius: 3pt;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 10pt;
+            color: #e74c3c;
+            direction: ltr;
+            display: inline-block;
         }
+
         pre {
-            background-color: #f4f4f4;
-            padding: 1em;
-            border-radius: 5px;
+            background-color: #f8f9fa;
+            padding: 12pt;
+            border-radius: 5pt;
             overflow-x: auto;
             direction: ltr;
             text-align: left;
+            border: 1pt solid #dee2e6;
+            margin: 12pt 0;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 10pt;
+            line-height: 1.4;
         }
-        strong { color: #2c3e50; }
-        em { font-style: italic; }
+
+        /* Enhanced emphasis styling */
+        strong {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        em {
+            font-style: italic;
+            color: #34495e;
+        }
+
+        /* Link styling */
+        a {
+            color: #3498db;
+            text-decoration: underline;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+
+        /* Horizontal rule */
+        hr {
+            border: none;
+            border-top: 1pt solid #dee2e6;
+            margin: 24pt 0;
+        }
+
+        /* Footer styling */
+        .footer {
+            margin-top: 36pt;
+            padding-top: 12pt;
+            border-top: 1pt solid #dee2e6;
+            font-size: 10pt;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        /* Print optimizations */
+        @media print {
+            body {
+                font-size: 11pt;
+            }
+
+            h1 { font-size: 16pt; }
+            h2 { font-size: 14pt; }
+            h3 { font-size: 12pt; }
+        }
     </style>
 </head>
 <body>
     ${html}
-    
-    <hr style="margin-top: 3em; border: none; border-top: 1px solid #ddd;">
-    <p style="font-size: 12px; color: #666; text-align: center;">
-        تولید شده توسط DocRight - ${new Date().toLocaleDateString('fa-IR')}
-    </p>
+
+    <div class="footer">
+        <hr>
+        <p>تولید شده توسط DocRight | ${new Date().toLocaleDateString('fa-IR')} | ${new Date().toLocaleTimeString('fa-IR')}</p>
+    </div>
 </body>
 </html>`;
       }

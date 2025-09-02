@@ -36,40 +36,71 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
     cmd = ["pandoc", md_path, "-o", out_path]
 
     if fmt == "docx":
-        # --- REPLACE 'Vazirmatn' with the actual system name of your chosen Farsi font ---
-        # You can find this name by running `fc-list | grep -i YourFontPartialName` inside the Docker container
-        # after you've installed the font via the Dockerfile.
-        custom_farsi_font_name = "Vazirmatn" # Example: "Vazirmatn", "Sahel", "Estedad", or your custom font's system name
+        # Enhanced Farsi font configuration
+        custom_farsi_font_name = "Arial"  # Using Arial as primary font for better compatibility
 
+        # Basic RTL and language settings
         cmd += [
-            "--metadata=lang:fa",  # Sets the document language to Farsi
-            "--metadata=dir:rtl",  # Sets the base text direction to Right-to-Left
-            f"--variable=mainfont:{custom_farsi_font_name}" # Tells Pandoc to use this as the main body font
-            # Optionally, if your font has distinct styles for sans-serif or mono and you want to enforce them:
-            # f"--variable=sansfont:{custom_farsi_font_name}",
-            # f"--variable=monofont:{custom_farsi_font_name}",
+            "--metadata=lang:fa",
+            "--metadata=dir:rtl",
+            f"--variable=mainfont:{custom_farsi_font_name}",
+            "--variable=fontsize:12pt",
+            "--variable=geometry:margin=1in",  # Standard margins
+            "--variable=linestretch:1.5",  # Better line spacing
+            "--variable=colorlinks=true",
+            "--variable=linkcolor=blue",
+            "--variable=urlcolor=blue",
         ]
-        logger.info(f"Added RTL metadata and mainfont='{custom_farsi_font_name}' for DOCX.")
 
-        # --- Optional: Using a reference.docx for more style control (e.g., bold color, specific heading fonts) ---
-        # If you also want to control specific style attributes like bold color, heading fonts/sizes/colors,
-        # or paragraph spacing in more detail, you would use a reference.docx.
-        # The --variable=mainfont sets the base font, but a reference.docx defines the "Normal", "Heading 1",
-        # "Strong" (for bold) styles, etc.
-        #
-        # 1. Create 'reference.docx' with your desired styles (e.g., "Normal" style using your custom_farsi_font_name,
-        #    "Strong" style with a specific color if desired).
-        # 2. Copy 'reference.docx' into your Docker image (e.g., to '/app/reference.docx').
-        # 3. Uncomment the following lines:
-        #
-        # reference_docx_path = "/app/reference.docx"
-        # if os.path.exists(reference_docx_path):
-        #     cmd += [f"--reference-doc={reference_docx_path}"]
-        #     logger.info(f"Using custom reference DOCX: '{reference_docx_path}'")
-        # else:
-        #     logger.warning(f"Custom reference DOCX '{reference_docx_path}' not found. "
-        #                    "Relying on mainfont variable, metadata, and Pandoc's default styling for DOCX.")
-        # --- End Optional ---
+        # Use reference document for consistent styling
+        reference_docx_path = "/app/outputs/reference.docx"
+        if os.path.exists(reference_docx_path):
+            cmd += [f"--reference-doc={reference_docx_path}"]
+            logger.info(f"Using custom reference DOCX: '{reference_docx_path}'")
+        else:
+            logger.warning(f"Custom reference DOCX '{reference_docx_path}' not found. Creating one...")
+            # Create a basic reference document if it doesn't exist
+            try:
+                from docx import Document
+                from docx.shared import Pt
+                from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+
+                doc = Document()
+                styles = doc.styles
+
+                # Configure Normal style
+                normal_style = styles['Normal']
+                normal_font = normal_style.font
+                normal_font.name = custom_farsi_font_name
+                normal_font.size = Pt(12)
+                normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+                # Configure Heading 1
+                h1_style = styles['Heading 1']
+                h1_font = h1_style.font
+                h1_font.name = custom_farsi_font_name
+                h1_font.size = Pt(18)
+                h1_font.bold = True
+                h1_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+                doc.save(reference_docx_path)
+                cmd += [f"--reference-doc={reference_docx_path}"]
+                logger.info(f"Created and using new reference DOCX: '{reference_docx_path}'")
+            except Exception as e:
+                logger.error(f"Failed to create reference DOCX: {e}")
+
+        # Advanced formatting options
+        cmd += [
+            "--variable=documentclass:article",
+            "--variable=classoption:twoside",  # For professional documents
+            "--variable=indent:true",  # Paragraph indentation
+            "--variable=subscript:true",  # Enable subscript
+            "--variable=superscript:true",  # Enable superscript
+            "--variable=strikeout:true",  # Enable strikeout
+            "--variable=underline:true",  # Enable underline
+        ]
+
+        logger.info(f"Enhanced DOCX configuration with RTL support, reference document, and advanced formatting.")
 
     logger.debug(f"Executing Pandoc command: \"{' '.join(cmd)}\"")
 
