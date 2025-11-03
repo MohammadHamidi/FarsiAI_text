@@ -62,6 +62,18 @@
 
   <!-- Enhanced Markdown processor for Farsi -->
   <script>
+    // HTML escape utility function
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
     // Enhanced Marked.js configuration for Farsi
     marked.setOptions({
       breaks: true,        // Convert line breaks to <br>
@@ -77,50 +89,112 @@
     // Custom renderer for Farsi-specific enhancements
     const renderer = new marked.Renderer();
 
+    // Helper to ensure content is string
+    function ensureString(value) {
+      if (typeof value !== 'string') {
+        console.warn('Renderer received non-string value:', typeof value, value);
+        return String(value || '');
+      }
+      return value;
+    }
+
     // Enhanced table rendering with RTL support
     renderer.table = function(header, body) {
-      return `<table dir="rtl" style="direction: rtl; text-align: right; width: 100%; border-collapse: collapse; margin: 1em 0;">
-        <thead>${header}</thead>
-        <tbody>${body}</tbody>
-      </table>`;
+      try {
+        const safeHeader = ensureString(header || '');
+        const safeBody = ensureString(body || '');
+        return `<table dir="rtl" style="direction: rtl; text-align: right; width: 100%; border-collapse: collapse; margin: 1em 0;">
+          <thead>${safeHeader}</thead>
+          <tbody>${safeBody}</tbody>
+        </table>`;
+      } catch (err) {
+        console.error('Error rendering table:', err);
+        return `<table dir="rtl"><thead>${header || ''}</thead><tbody>${body || ''}</tbody></table>`;
+      }
     };
 
     renderer.tablerow = function(content) {
-      return `<tr style="border-bottom: 1px solid #ddd;">${content}</tr>`;
+      try {
+        const safeContent = ensureString(content || '');
+        return `<tr style="border-bottom: 1px solid #ddd;">${safeContent}</tr>`;
+      } catch (err) {
+        console.error('Error rendering table row:', err);
+        return `<tr>${content || ''}</tr>`;
+      }
     };
 
     renderer.tablecell = function(content, flags) {
-      const type = flags.header ? 'th' : 'td';
-      const style = flags.header
-        ? 'border: 1px solid #ddd; padding: 8px 12px; background-color: #f2f2f2; font-weight: bold; text-align: right;'
-        : 'border: 1px solid #ddd; padding: 8px 12px; text-align: right;';
-      return `<${type} style="${style}">${content}</${type}>`;
+      try {
+        const safeContent = ensureString(content || '');
+        // Safely access flags object
+        const isHeader = flags && typeof flags.header !== 'undefined' ? flags.header : false;
+        const type = isHeader ? 'th' : 'td';
+        const style = isHeader
+          ? 'border: 1px solid #ddd; padding: 8px 12px; background-color: #f2f2f2; font-weight: bold; text-align: right;'
+          : 'border: 1px solid #ddd; padding: 8px 12px; text-align: right;';
+        return `<${type} style="${style}">${safeContent}</${type}>`;
+      } catch (err) {
+        console.error('Error rendering table cell:', err);
+        return `<td>${content || ''}</td>`;
+      }
     };
 
     // Enhanced code block rendering
     renderer.code = function(code, language, escaped) {
-      const lang = language || '';
-      return `<pre style="background-color: #f4f4f4; padding: 1em; border-radius: 5px; overflow-x: auto; direction: ltr; text-align: left;"><code class="language-${lang}" style="font-family: 'Courier New', monospace;">${escaped ? code : escape(code)}</code></pre>`;
+      try {
+        const safeCode = ensureString(code || '');
+        const lang = (language && typeof language === 'string') ? language : '';
+        const escapedCode = (escaped === true) ? safeCode : escapeHtml(safeCode);
+        return `<pre style="background-color: #f4f4f4; padding: 1em; border-radius: 5px; overflow-x: auto; direction: ltr; text-align: left;"><code class="language-${lang}" style="font-family: 'Courier New', monospace;">${escapedCode}</code></pre>`;
+      } catch (err) {
+        console.error('Error rendering code block:', err);
+        return `<pre><code>${code || ''}</code></pre>`;
+      }
     };
 
     renderer.codespan = function(code) {
-      return `<code style="background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; direction: ltr;">${code}</code>`;
+      try {
+        const safeCode = ensureString(code || '');
+        return `<code style="background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; direction: ltr;">${safeCode}</code>`;
+      } catch (err) {
+        console.error('Error rendering inline code:', err);
+        return `<code>${code || ''}</code>`;
+      }
     };
 
     // Enhanced list rendering for RTL
     renderer.list = function(body, ordered, start) {
-      const type = ordered ? 'ol' : 'ul';
-      const startAttr = (ordered && start !== 1) ? ` start="${start}"` : '';
-      return `<${type}${startAttr} style="direction: rtl; text-align: right; padding-right: 2em; margin: 1em 0;">${body}</${type}>`;
+      try {
+        const safeBody = ensureString(body || '');
+        const type = ordered ? 'ol' : 'ul';
+        const startAttr = (ordered && start !== 1 && typeof start === 'number') ? ` start="${start}"` : '';
+        return `<${type}${startAttr} style="direction: rtl; text-align: right; padding-right: 2em; margin: 1em 0;">${safeBody}</${type}>`;
+      } catch (err) {
+        console.error('Error rendering list:', err);
+        const type = ordered ? 'ol' : 'ul';
+        return `<${type}>${body || ''}</${type}>`;
+      }
     };
 
     renderer.listitem = function(text) {
-      return `<li style="margin: 0.5em 0; text-align: right;">${text}</li>`;
+      try {
+        const safeText = ensureString(text || '');
+        return `<li style="margin: 0.5em 0; text-align: right;">${safeText}</li>`;
+      } catch (err) {
+        console.error('Error rendering list item:', err);
+        return `<li>${text || ''}</li>`;
+      }
     };
 
     // Enhanced blockquote rendering
     renderer.blockquote = function(quote) {
-      return `<blockquote style="border-right: 3px solid #3498db; margin: 1em 0; padding: 0.5em 1em; background-color: #f8f9fa; direction: rtl; text-align: right;">${quote}</blockquote>`;
+      try {
+        const safeQuote = ensureString(quote || '');
+        return `<blockquote style="border-right: 3px solid #3498db; margin: 1em 0; padding: 0.5em 1em; background-color: #f8f9fa; direction: rtl; text-align: right;">${safeQuote}</blockquote>`;
+      } catch (err) {
+        console.error('Error rendering blockquote:', err);
+        return `<blockquote>${quote || ''}</blockquote>`;
+      }
     };
 
     // Apply custom renderer
