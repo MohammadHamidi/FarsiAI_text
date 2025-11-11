@@ -4,6 +4,9 @@ import logging
 from datetime import datetime, timedelta
 import glob
 from pathlib import Path
+import zipfile
+import xml.etree.ElementTree as ET
+from io import BytesIO
 # Ensure these are correctly imported from your config module
 # and that the config module itself is correctly set up.
 from .config import OUT_DIR, ALLOWED, MAX_FILE_AGE_HOURS
@@ -325,6 +328,17 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
         if result.stderr and result.stderr.strip():
             logger.warning(f"Pandoc STDERR (may contain warnings/info):\n{result.stderr.strip()}")
         logger.info(f"Successfully converted '{md_path}' to '{out_path}'")
+
+        # Post-process DOCX to ensure all paragraphs have RTL BiDi property
+        if fmt == "docx" and os.path.exists(out_path):
+            try:
+                apply_rtl_to_docx(out_path)
+                logger.info("RTL post-processing completed successfully")
+            except Exception as e:
+                logger.error(f"Failed to apply RTL post-processing: {e}")
+                # Don't fail the entire conversion if post-processing fails
+                # The file should still be usable even without this enhancement
+
         return out_path
     except subprocess.CalledProcessError as e:
         logger.error(f"Pandoc command failed with exit code {e.returncode} during conversion of '{md_path}' to '{fmt}'.")
@@ -349,6 +363,109 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
         if os.path.exists(out_path):
             try: os.remove(out_path)
             except OSError as re: logger.warning(f"Failed to remove '{out_path}' after error: {re}")
+        raise
+
+def apply_rtl_to_docx(docx_path: str):
+    """
+    Post-process a DOCX file to ensure all paragraphs have the RTL BiDi property.
+
+    This function opens the DOCX file (which is a ZIP archive), extracts the
+    word/document.xml file, parses it, and adds the <w:bidi/> element to all
+    paragraph properties (<w:pPr>) to ensure proper RTL rendering.
+
+    Args:
+        docx_path: Path to the DOCX file to process
+
+    Raises:
+        FileNotFoundError: If the DOCX file doesn't exist
+        Exception: If there's an error processing the DOCX file
+    """
+    if not os.path.exists(docx_path):
+        logger.error(f"DOCX file not found: {docx_path}")
+        raise FileNotFoundError(f"DOCX file not found: {docx_path}")
+
+    logger.info(f"Applying RTL BiDi properties to all paragraphs in: {docx_path}")
+
+    try:
+        # Define XML namespaces used in DOCX files
+        namespaces = {
+            'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+            'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+            'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
+        }
+
+        # Register namespaces to preserve prefixes
+        for prefix, uri in namespaces.items():
+            ET.register_namespace(prefix, uri)
+
+        # Open the DOCX file as a ZIP archive
+        with zipfile.ZipFile(docx_path, 'r') as docx_zip:
+            # Read the main document XML
+            document_xml = docx_zip.read('word/document.xml')
+
+        # Parse the XML
+        tree = ET.ElementTree(ET.fromstring(document_xml))
+        root = tree.getroot()
+
+        # Counter for modified paragraphs
+        modified_count = 0
+
+        # Find all paragraph elements (<w:p>)
+        for paragraph in root.findall('.//w:p', namespaces):
+            # Check if paragraph properties (<w:pPr>) exist
+            pPr = paragraph.find('w:pPr', namespaces)
+
+            if pPr is None:
+                # Create <w:pPr> if it doesn't exist
+                pPr = ET.Element('{' + namespaces['w'] + '}pPr')
+                # Insert at the beginning of the paragraph
+                paragraph.insert(0, pPr)
+
+            # Check if <w:bidi/> already exists
+            bidi = pPr.find('w:bidi', namespaces)
+
+            if bidi is None:
+                # Create and add <w:bidi/> element at the beginning of <w:pPr>
+                bidi = ET.Element('{' + namespaces['w'] + '}bidi')
+                pPr.insert(0, bidi)
+                modified_count += 1
+
+        logger.info(f"Added RTL BiDi property to {modified_count} paragraphs")
+
+        # Convert the modified XML tree back to bytes
+        modified_xml = ET.tostring(root, encoding='utf-8', xml_declaration=True)
+
+        # Create a new DOCX file with the modified document.xml
+        # We need to read all files from the original DOCX and write them to a new one
+        temp_docx_path = docx_path + '.tmp'
+
+        with zipfile.ZipFile(docx_path, 'r') as docx_zip_read:
+            with zipfile.ZipFile(temp_docx_path, 'w', zipfile.ZIP_DEFLATED) as docx_zip_write:
+                # Copy all files except word/document.xml
+                for item in docx_zip_read.infolist():
+                    if item.filename != 'word/document.xml':
+                        data = docx_zip_read.read(item.filename)
+                        docx_zip_write.writestr(item, data)
+
+                # Write the modified document.xml
+                docx_zip_write.writestr('word/document.xml', modified_xml)
+
+        # Replace the original file with the modified one
+        os.replace(temp_docx_path, docx_path)
+
+        logger.info(f"Successfully applied RTL BiDi properties to: {docx_path}")
+
+    except FileNotFoundError:
+        raise
+    except Exception as e:
+        logger.error(f"Error applying RTL properties to DOCX: {e}", exc_info=True)
+        # Clean up temp file if it exists
+        temp_docx_path = docx_path + '.tmp'
+        if os.path.exists(temp_docx_path):
+            try:
+                os.remove(temp_docx_path)
+            except OSError:
+                pass
         raise
 
 def cleanup_old_files():
