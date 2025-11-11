@@ -7,6 +7,7 @@ import uuid
 import os
 import logging
 import time
+import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any, Callable # Keep Callable if used

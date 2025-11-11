@@ -8,7 +8,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./static:/app/static
-      - ./data/outputs:/tmp/outputs
+      - ./data/outputs:/app/outputs
     environment:
       - DEBUG=true
       - MAX_FILE_AGE_HOURS=24
