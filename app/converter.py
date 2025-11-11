@@ -367,11 +367,15 @@ def render_markdown(md_path: str, out_path: str, fmt: str):
 
 def apply_rtl_to_docx(docx_path: str):
     """
-    Post-process a DOCX file to ensure all paragraphs have the RTL BiDi property.
+    Post-process a DOCX file to ensure all paragraphs have the RTL BiDi property
+    and proper pagination controls to prevent content from splitting across pages.
 
     This function opens the DOCX file (which is a ZIP archive), extracts the
-    word/document.xml file, parses it, and adds the <w:bidi/> element to all
-    paragraph properties (<w:pPr>) to ensure proper RTL rendering.
+    word/document.xml file, parses it, and adds:
+    - <w:bidi/> element to all paragraph properties for proper RTL rendering
+    - <w:keepLines/> to keep all lines of a paragraph together
+    - <w:keepNext/> for headings and code blocks to keep with next paragraph
+    - <w:cantSplit/> to table rows to prevent tables from splitting across pages
 
     Args:
         docx_path: Path to the DOCX file to process
@@ -384,7 +388,7 @@ def apply_rtl_to_docx(docx_path: str):
         logger.error(f"DOCX file not found: {docx_path}")
         raise FileNotFoundError(f"DOCX file not found: {docx_path}")
 
-    logger.info(f"Applying RTL BiDi properties to all paragraphs in: {docx_path}")
+    logger.info(f"Applying RTL BiDi properties and pagination controls to: {docx_path}")
 
     try:
         # Define XML namespaces used in DOCX files
@@ -407,8 +411,9 @@ def apply_rtl_to_docx(docx_path: str):
         tree = ET.ElementTree(ET.fromstring(document_xml))
         root = tree.getroot()
 
-        # Counter for modified paragraphs
-        modified_count = 0
+        # Counters for modifications
+        modified_paragraph_count = 0
+        modified_table_count = 0
 
         # Find all paragraph elements (<w:p>)
         for paragraph in root.findall('.//w:p', namespaces):
@@ -423,14 +428,62 @@ def apply_rtl_to_docx(docx_path: str):
 
             # Check if <w:bidi/> already exists
             bidi = pPr.find('w:bidi', namespaces)
-
             if bidi is None:
-                # Create and add <w:bidi/> element at the beginning of <w:pPr>
+                # Create and add <w:bidi/> element
                 bidi = ET.Element('{' + namespaces['w'] + '}bidi')
-                pPr.insert(0, bidi)
-                modified_count += 1
+                pPr.append(bidi)
 
-        logger.info(f"Added RTL BiDi property to {modified_count} paragraphs")
+            # Add pagination controls to prevent splitting
+            # Check if <w:keepLines/> already exists
+            keep_lines = pPr.find('w:keepLines', namespaces)
+            if keep_lines is None:
+                # Keep all lines of paragraph together
+                keep_lines = ET.Element('{' + namespaces['w'] + '}keepLines')
+                pPr.append(keep_lines)
+
+            # Check if this is a heading or code block by examining the style
+            pStyle = pPr.find('w:pStyle', namespaces)
+            is_heading_or_code = False
+
+            if pStyle is not None:
+                style_val = pStyle.get('{' + namespaces['w'] + '}val', '')
+                # Check if it's a heading or code-related style
+                if (style_val.startswith('Heading') or
+                    'Code' in style_val or
+                    'Source' in style_val or
+                    'Verbatim' in style_val):
+                    is_heading_or_code = True
+
+            # For headings and code blocks, keep with next paragraph
+            if is_heading_or_code:
+                keep_next = pPr.find('w:keepNext', namespaces)
+                if keep_next is None:
+                    keep_next = ET.Element('{' + namespaces['w'] + '}keepNext')
+                    pPr.append(keep_next)
+
+            modified_paragraph_count += 1
+
+        # Find all table elements and prevent row splitting
+        for table in root.findall('.//w:tbl', namespaces):
+            for row in table.findall('.//w:tr', namespaces):
+                # Check if row properties (<w:trPr>) exist
+                trPr = row.find('w:trPr', namespaces)
+
+                if trPr is None:
+                    # Create <w:trPr> if it doesn't exist
+                    trPr = ET.Element('{' + namespaces['w'] + '}trPr')
+                    # Insert at the beginning of the row
+                    row.insert(0, trPr)
+
+                # Check if <w:cantSplit/> already exists
+                cant_split = trPr.find('w:cantSplit', namespaces)
+                if cant_split is None:
+                    # Prevent table row from splitting across pages
+                    cant_split = ET.Element('{' + namespaces['w'] + '}cantSplit')
+                    trPr.append(cant_split)
+                    modified_table_count += 1
+
+        logger.info(f"Added pagination controls to {modified_paragraph_count} paragraphs and {modified_table_count} table rows")
 
         # Convert the modified XML tree back to bytes
         modified_xml = ET.tostring(root, encoding='utf-8', xml_declaration=True)
@@ -453,12 +506,12 @@ def apply_rtl_to_docx(docx_path: str):
         # Replace the original file with the modified one
         os.replace(temp_docx_path, docx_path)
 
-        logger.info(f"Successfully applied RTL BiDi properties to: {docx_path}")
+        logger.info(f"Successfully applied RTL BiDi properties and pagination controls to: {docx_path}")
 
     except FileNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error applying RTL properties to DOCX: {e}", exc_info=True)
+        logger.error(f"Error applying RTL properties and pagination controls to DOCX: {e}", exc_info=True)
         # Clean up temp file if it exists
         temp_docx_path = docx_path + '.tmp'
         if os.path.exists(temp_docx_path):
